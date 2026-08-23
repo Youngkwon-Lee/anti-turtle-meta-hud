@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Meta Ray-Ban Display용 Anti Turtle 자세 코치와 Meta AI 사진 릴레이입니다.">
+    <meta name="mrbd-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" href="favicon.png" sizes="128x128" type="image/png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css?v=20260822-anatomy-avatar-1">
+    <title>Anti Turtle Coach</title>
+  </head>
+  <body>
+    <div class="app-root">
+      <section id="monitor" class="screen active" aria-labelledby="monitor-title">
+        <header class="instrument-header static-surface">
+          <div class="brand-lockup">
+            <span class="brand-mark" aria-hidden="true">AT</span>
+            <div>
+              <p class="eyebrow">KINELO / POSTURE LINK</p>
+              <p id="monitor-title" class="brand-name">ANTI TURTLE</p>
+            </div>
+          </div>
+          <div id="source-status" class="connection-status" role="status">
+            <span class="status-pip" aria-hidden="true"></span>
+            <span class="status-label">STANDBY</span>
+          </div>
+        </header>
+
+        <main class="monitor-stack">
+          <article id="posture-panel" class="posture-panel static-surface" aria-live="assertive">
+            <div class="posture-heading">
+              <p class="section-code">RELATIVE ANGLE · LIVE</p>
+              <span id="posture-state" class="posture-state idle">READY</span>
+            </div>
+            <div class="angle-readout">
+              <strong id="deviation-value">--</strong><span>°</span>
+            </div>
+            <p id="coach-cue" class="coach-cue">바른 자세에서 세션을 시작하세요.</p>
+          </article>
+
+          <section class="sensor-grid" aria-label="센서 상태">
+            <article class="metric-card static-surface">
+              <span>HEAD</span><strong id="head-pitch">--°</strong>
+            </article>
+            <article class="metric-card static-surface">
+              <span>TORSO</span><strong id="torso-pitch">--°</strong>
+            </article>
+            <article class="metric-card static-surface">
+              <span>HOLD</span><strong id="bad-hold">0.0s</strong>
+            </article>
+          </section>
+
+          <div class="threshold-track static-surface" aria-label="자세 편차 구간">
+            <div id="threshold-fill" class="threshold-fill"></div>
+            <span class="threshold-good">GOOD &lt;8°</span>
+            <span class="threshold-bad">BAD &gt;15°</span>
+          </div>
+
+          <nav class="action-rail monitor-actions" aria-label="세션 제어">
+            <button id="primary-action" class="rail-action focusable interactive" data-action="start-sensors" type="button">
+              <span class="content"><small>01</small><b id="primary-label">START SENSOR</b></span>
+            </button>
+            <button id="secondary-action" class="rail-action focusable interactive" data-action="start-demo" type="button">
+              <span class="content"><small>02</small><b id="secondary-label">RUN DEMO</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="open-photo" type="button">
+              <span class="content"><small>03</small><b>PHOTO RELAY</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="open-sensor-link" type="button">
+              <span class="content"><small>04</small><b>SENSOR LINK</b></span>
+            </button>
+          </nav>
+        </main>
+
+        <footer class="gesture-hint" aria-hidden="true">
+          <span>SWIPE</span><i></i><span>TARGET</span><i></i><span>PINCH</span><i></i><span>SELECT</span>
+        </footer>
+      </section>
+
+      <section id="sensor-link" class="screen" aria-labelledby="sensor-link-title" hidden>
+        <header class="instrument-header static-surface">
+          <div class="brand-lockup">
+            <span class="brand-mark" aria-hidden="true">AT</span>
+            <div>
+              <p class="eyebrow">KINELO / SENSOR BRIDGE</p>
+              <p id="sensor-link-title" class="brand-name">PHONE SENSOR LINK</p>
+            </div>
+          </div>
+          <div id="ble-status" class="connection-status" role="status">
+            <span class="status-pip" aria-hidden="true"></span>
+            <span id="ble-status-label">OFFLINE</span>
+          </div>
+        </header>
+
+        <main class="sensor-link-stack">
+          <article class="sensor-link-hero static-surface" aria-live="polite">
+            <p class="section-code">PHONE BLE → GLASSES</p>
+            <strong id="ble-device-name">NO DEVICE</strong>
+            <p id="ble-support-note">휴대폰 Chrome에서 센서를 연결하세요. 레이벤 화면은 이 릴레이 값을 읽습니다.</p>
+          </article>
+
+          <section class="sensor-link-grid" aria-label="BLE 릴레이 상태">
+            <article class="metric-card static-surface"><span>PACKETS</span><strong id="ble-packets">0</strong></article>
+            <article class="metric-card static-surface"><span>LAST ANGLE</span><strong id="ble-angle">--°</strong></article>
+            <article class="metric-card static-surface"><span>RELAY</span><strong id="ble-relay">READY</strong></article>
+          </section>
+
+          <article class="sensor-link-note static-surface">
+            <p class="section-code">ONE-TIME SETUP</p>
+            <p>휴대폰에서 <b>CONNECT BLE</b>를 누르고 <b>AntiTurtle-HEAD</b>를 선택하세요. 이 화면을 닫아도 연결된 휴대폰은 센서 릴레이를 계속할 수 있습니다.</p>
+          </article>
+
+          <nav class="action-rail sensor-actions" aria-label="센서 링크 제어">
+            <button id="connect-ble" class="rail-action focusable interactive" data-action="connect-ble" type="button">
+              <span class="content"><small>01</small><b>CONNECT BLE</b></span>
+            </button>
+            <button id="disconnect-ble" class="rail-action focusable interactive" data-action="disconnect-ble" type="button" disabled>
+              <span class="content"><small>02</small><b>DISCONNECT</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="back-to-monitor" type="button">
+              <span class="content"><small>03</small><b>BACK</b></span>
+            </button>
+          </nav>
+        </main>
+
+        <footer class="gesture-hint" aria-hidden="true">
+          <span>SWIPE</span><i></i><span>TARGET</span><i></i><span>PINCH</span><i></i><span>SELECT</span>
+        </footer>
+      </section>
+
+      <section id="summary" class="screen" aria-labelledby="summary-title" hidden>
+        <header class="instrument-header static-surface">
+          <div class="brand-lockup">
+            <span class="brand-mark" aria-hidden="true">AT</span>
+            <div>
+              <p class="eyebrow">KINELO / SESSION REPORT</p>
+              <p id="summary-title" class="brand-name">ANTI TURTLE</p>
+            </div>
+          </div>
+          <div class="response-status complete">COMPLETE</div>
+        </header>
+
+        <main class="summary-stack">
+          <article class="summary-hero static-surface">
+            <p class="section-code">GOOD POSTURE RATIO</p>
+            <div><strong id="good-percent">--</strong><span>%</span></div>
+            <p id="summary-line">세션 데이터를 정리했습니다.</p>
+          </article>
+
+          <section class="summary-grid" aria-label="세션 요약">
+            <article class="metric-card static-surface"><span>TIME</span><strong id="session-time">0:00</strong></article>
+            <article class="metric-card static-surface"><span>ALERTS</span><strong id="alert-count">0</strong></article>
+            <article class="metric-card static-surface"><span>SOURCE</span><strong id="summary-source">--</strong></article>
+          </section>
+
+          <article id="coach-panel" class="coach-panel focusable static-surface" tabindex="0" aria-live="polite" aria-busy="false">
+            <p class="response-kicker">AI POSTURE COACH</p>
+            <p id="coach-text">AI 코칭을 선택하면 이번 세션을 한 문장으로 정리합니다.</p>
+          </article>
+
+          <nav class="action-rail" aria-label="요약 화면 제어">
+            <button id="coach-action" class="rail-action focusable interactive" data-action="ask-coach" type="button">
+              <span class="content"><small>01</small><b>ASK COACH</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="new-session" type="button">
+              <span class="content"><small>02</small><b>NEW SESSION</b></span>
+            </button>
+          </nav>
+        </main>
+      </section>
+
+      <section id="photo-relay" class="screen" aria-labelledby="photo-title" hidden>
+        <header class="instrument-header static-surface">
+          <div class="brand-lockup">
+            <span class="brand-mark" aria-hidden="true">AT</span>
+            <div>
+              <p class="eyebrow">KINELO / PHOTO RELAY</p>
+              <p id="photo-title" class="brand-name">META AI PHOTO</p>
+            </div>
+          </div>
+          <div id="photo-status" class="connection-status" role="status">
+            <span class="status-pip" aria-hidden="true"></span>
+            <span id="photo-status-label">WAITING</span>
+          </div>
+        </header>
+
+        <main class="photo-stack">
+          <article class="photo-preview static-surface" aria-live="polite">
+            <div id="photo-placeholder" class="photo-placeholder">
+              <span class="photo-glyph" aria-hidden="true">▧</span>
+              <strong>사진을 기다리는 중</strong>
+              <span>휴대폰에서 Meta AI 사진을 저장한 뒤<br>PHOTO RELAY로 보내세요.</span>
+            </div>
+            <img id="photo-preview" src="data:," alt="Meta AI에서 릴레이한 사진" hidden>
+            <div id="photo-caption" class="photo-caption" hidden>
+              <span id="photo-name">META AI PHOTO</span>
+              <span id="photo-time"></span>
+            </div>
+          </article>
+
+          <article class="photo-instructions static-surface">
+            <p class="section-code">PHONE → GLASSES</p>
+            <p>휴대폰에서 사진을 선택하면 이 릴레이 서버에 임시 저장됩니다. 안경에서는 <b>REFRESH</b>를 선택해 최신 사진을 표시하세요.</p>
+          </article>
+
+          <nav class="action-rail photo-actions" aria-label="사진 릴레이 제어">
+            <button class="rail-action focusable interactive" data-action="pick-photo" type="button">
+              <span class="content"><small>01</small><b>PICK ON PHONE</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="refresh-photo" type="button">
+              <span class="content"><small>02</small><b>REFRESH</b></span>
+            </button>
+            <button class="rail-action focusable interactive" data-action="back-to-monitor" type="button">
+              <span class="content"><small>03</small><b>BACK</b></span>
+            </button>
+          </nav>
+        </main>
+
+        <footer class="gesture-hint" aria-hidden="true">
+          <span>SWIPE</span><i></i><span>TARGET</span><i></i><span>PINCH</span><i></i><span>SELECT</span>
+        </footer>
+        <input id="photo-input" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">
+      </section>
+
+      <section id="presentation-hud" class="presentation-hud" aria-label="Anti Turtle 자세 HUD" aria-live="polite" hidden>
+        <video id="camera-feed" class="camera-feed" autoplay muted playsinline hidden></video>
+        <div id="camera-shade" class="camera-shade" aria-hidden="true" hidden></div>
+        <div id="camera-indicator" class="camera-indicator" role="status" hidden>
+          <span aria-hidden="true"></span><strong id="camera-indicator-label">CAMERA LIVE</strong>
+        </div>
+        <div id="camera-gate" class="camera-gate static-surface" role="status" hidden>
+          <p>LIVE CAMERA</p>
+          <strong id="camera-message">카메라 권한을 확인하고 있습니다.</strong>
+          <button id="camera-action" class="camera-action focusable interactive" data-action="start-camera" type="button" hidden>
+            <span id="camera-action-label" class="content">TRY CAMERA</span>
+          </button>
+        </div>
+
+        <div class="hud-lock hud-lock-top" aria-hidden="true"></div>
+        <div class="hud-lock hud-lock-left" aria-hidden="true"></div>
+        <div class="hud-lock hud-lock-right" aria-hidden="true"></div>
+
+        <div id="hud-anatomy-avatar" class="hud-anatomy-avatar" role="img"
+          aria-label="기준 자세와 현재 머리 전방 이동을 비교하는 해부학적 아바타"></div>
+
+        <svg class="hud-figure" viewBox="0 0 330 410" role="img" aria-label="수직 기준선과 머리 자세 각도">
+          <line class="hud-reference" x1="74" y1="46" x2="74" y2="362"></line>
+          <line class="hud-reference-cap" x1="61" y1="46" x2="87" y2="46"></line>
+          <circle class="hud-reference-node" cx="74" cy="362" r="6"></circle>
+
+          <path class="hud-angle-arc" d="M 75 310 Q 142 237 225 222"></path>
+          <circle class="hud-angle-node" cx="225" cy="222" r="6"></circle>
+
+          <g id="hud-posture-figure" class="hud-posture-figure">
+            <path class="hud-shoulder" d="M 132 352 C 146 309 176 287 218 294 C 249 300 269 322 279 358"></path>
+            <path class="hud-neck" d="M 185 302 C 184 279 179 256 170 238"></path>
+            <path class="hud-head" d="M 170 239 C 148 237 134 220 136 198 C 137 181 146 171 157 163 C 159 150 170 141 186 139 C 210 136 229 151 234 173 C 239 196 229 219 210 230 C 196 238 184 240 170 239 Z"></path>
+            <path class="hud-face" d="M 156 164 L 142 174 L 146 181 L 140 192 L 147 197 L 145 210 C 146 221 154 229 168 231"></path>
+            <path class="hud-spine" d="M 184 286 C 193 306 197 328 198 356"></path>
+            <circle class="hud-spine-dot" cx="181" cy="279" r="3"></circle>
+            <circle class="hud-spine-dot" cx="187" cy="292" r="3"></circle>
+            <circle class="hud-spine-dot" cx="192" cy="306" r="3"></circle>
+            <circle class="hud-spine-dot" cx="196" cy="321" r="3"></circle>
+            <circle class="hud-spine-dot" cx="198" cy="337" r="3"></circle>
+          </g>
+        </svg>
+
+        <div class="hud-readout">
+          <div class="hud-angle-row"><strong id="hud-angle">0.0</strong><span>°</span></div>
+          <p id="hud-state" class="hud-state">GOOD</p>
+          <p id="hud-cue" class="hud-cue">현재 자세를 유지하세요</p>
+          <div class="hud-telemetry">
+            <span class="hud-live-dot" aria-hidden="true"></span>
+            <span id="hud-live-label">LIVE</span>
+            <i aria-hidden="true"></i>
+            <span>HOLD</span>
+            <strong id="hud-hold">0.0s</strong>
+          </div>
+        </div>
+
+        <div id="hud-sensor-pair" class="hud-sensor-pair" aria-label="머리와 몸통 IMU 각도">
+          <div><span>RAY-BAN HEAD</span><strong id="hud-head-pitch">--°</strong></div>
+          <div><span>NU TORSO</span><strong id="hud-torso-pitch">--°</strong></div>
+        </div>
+
+        <button id="head-imu-action" class="hud-head-action focusable interactive" data-action="start-head-imu" type="button" hidden>
+          <span id="head-imu-action-label" class="content">START HEAD IMU</span>
+        </button>
+
+        <div id="hud-correction-arrow" class="hud-correction-arrow" aria-hidden="true">
+          <span></span><i></i>
+        </div>
+        <p id="hud-signature" class="hud-signature">ANTI TURTLE · HEAD − TORSO</p>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <script src="posture-engine.js?v=20260822-anatomy-avatar-1"></script>
+    <script src="runtime-mode.js?v=20260822-head-only-relay-1"></script>
+    <script src="relay-protocol.js?v=20260822-realtime-relay-1"></script>
+    <script src="vendor/lottie-light-5.13.0.min.js?v=5.13.0"></script>
+    <script src="client.js?v=20260822-anatomy-avatar-4" defer></script>
+  </body>
+</html>

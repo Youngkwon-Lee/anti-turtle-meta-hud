@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "server.js": {
+      "maxDuration": 30
+    },
+    "api/ask.js": {
+      "maxDuration": 30
+    },
+    "api/photo.js": {
+      "maxDuration": 30
+    },
+    "api/telemetry.js": {
+      "maxDuration": 30
+    },
+    "api/torso.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+:root { color-scheme: dark; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: #0b0d10; color: #f7f8fa; }
+.bridge-shell { width: min(100% - 32px, 520px); margin: 0 auto; padding: 48px 0; }
+.eyebrow { color: #7ee787; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
+h1 { margin: 8px 0 12px; font-size: clamp(32px, 9vw, 52px); line-height: 1.02; }
+.lede, .note { color: #b7bdc8; line-height: 1.55; }
+.status-card, .metrics > div { background: #171a20; border: 1px solid #2a303a; border-radius: 18px; }
+.status-card { display: flex; align-items: center; gap: 14px; margin: 28px 0 14px; padding: 18px; }
+.status-card div { display: grid; gap: 4px; }
+.status-dot { width: 14px; height: 14px; border-radius: 50%; background: #69717f; box-shadow: 0 0 0 6px rgba(105,113,127,.14); }
+.status-dot.live { background: #7ee787; box-shadow: 0 0 0 6px rgba(126,231,135,.14); }
+small { color: #8d96a5; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.metrics > div { min-width: 0; padding: 14px; }
+.metrics strong { display: block; margin-top: 8px; font-size: 18px; overflow-wrap: anywhere; }
+button { width: 100%; min-height: 56px; margin-top: 10px; border: 0; border-radius: 16px; background: #7ee787; color: #071109; font: inherit; font-weight: 850; }
+button.secondary { background: #262b33; color: #f7f8fa; }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+button:disabled { opacity: .45; }
+.note { font-size: 13px; margin-top: 18px; }
+@media (max-width: 420px) { .metrics { grid-template-columns: 1fr; } }

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b0d10">
+    <link rel="icon" href="favicon.png" sizes="128x128" type="image/png">
+    <title>Anti Turtle NU IMU Bridge</title>
+    <link rel="stylesheet" href="torso-bridge.css">
+  </head>
+  <body>
+    <main class="bridge-shell">
+      <p class="eyebrow">KINELO / PHONE RELAY</p>
+      <h1>NU IMU 브리지</h1>
+      <p class="lede">루마의 NU40 `AntiTurtle-ANGLE` A 센서를 몸통 기준으로 연결해 Meta Display 안경으로 전달합니다.</p>
+
+      <section class="status-card" aria-live="polite">
+        <span id="status-dot" class="status-dot"></span>
+        <div><small>상태</small><strong id="status-label">연결 대기</strong></div>
+      </section>
+
+      <section class="metrics" aria-label="몸통 센서 값">
+        <div><small>PITCH</small><strong id="pitch-value">--°</strong></div>
+        <div><small>ACC TRUST</small><strong id="trust-value">--</strong></div>
+        <div><small>RELAY</small><strong id="relay-value">--</strong></div>
+      </section>
+
+      <button id="connect-button" type="button">AntiTurtle-ANGLE 연결</button>
+      <button id="zero-button" class="secondary" type="button" disabled>현재 자세 영점</button>
+      <p id="support-note" class="note">Android Chrome의 Web Bluetooth가 필요합니다. 이 페이지는 HTTPS 또는 localhost에서 여세요.</p>
+    </main>
+    <script src="torso-parser.js"></script>
+    <script src="torso-bridge.js" defer></script>
+  </body>
+</html>

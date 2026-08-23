@@ -1,0 +1,17 @@
+{
+  "name": "Kinelo Anti Turtle Coach",
+  "short_name": "Anti Turtle",
+  "description": "Track calibrated head-to-torso angle and receive concise posture coaching on Meta Ray-Ban Display glasses.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

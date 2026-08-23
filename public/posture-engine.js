@@ -1,0 +1,205 @@
+(function (root, factory) {
+  'use strict';
+
+  var api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root) root.AntiTurtleEngine = api;
+})(typeof window !== 'undefined' ? window : globalThis, function () {
+  'use strict';
+
+  var DEFAULTS = {
+    cautionAt: 8,
+    badAt: 15,
+    badHoldMs: 3000,
+    maxGapMs: 1000,
+  };
+
+  function finiteNumber(value, label) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) throw new TypeError(label + ' must be a finite number');
+    return number;
+  }
+
+  function classifyDeviation(deviation, options) {
+    var value = Math.abs(finiteNumber(deviation, 'deviation'));
+    if (value < options.cautionAt) return 'GOOD';
+    if (value <= options.badAt) return 'CAUTION';
+    return 'BAD';
+  }
+
+  function postureAnimationFrame(deviation, totalFrames, maxDeviation) {
+    var value = Math.abs(finiteNumber(deviation, 'deviation'));
+    var frames = Math.max(1, Math.round(finiteNumber(totalFrames, 'totalFrames')));
+    var maximum = maxDeviation === undefined
+      ? 25
+      : Math.max(1, finiteNumber(maxDeviation, 'maxDeviation'));
+    return Math.round(Math.min(maximum, value) / maximum * (frames - 1));
+  }
+
+  function median(values) {
+    var sorted = values.slice().sort(function (left, right) { return left - right; });
+    var middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[middle]
+      : (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+
+  function createHeadCalibrator(overrides) {
+    var options = Object.assign({
+      warmupMs: 300,
+      sampleMs: 700,
+      minSamples: 6,
+    }, overrides || {});
+    var startedAt = null;
+    var samples = [];
+
+    return {
+      add: function (value, at) {
+        var pitch = finiteNumber(value, 'headPitch');
+        var timestamp = at === undefined ? Date.now() : finiteNumber(at, 'at');
+        if (startedAt === null) startedAt = timestamp;
+        var elapsedMs = Math.max(0, timestamp - startedAt);
+        if (elapsedMs >= options.warmupMs) samples.push(pitch);
+        var ready = elapsedMs >= options.warmupMs + options.sampleMs &&
+          samples.length >= options.minSamples;
+        return {
+          ready: ready,
+          baseline: ready ? median(samples) : null,
+          sampleCount: samples.length,
+          elapsedMs: elapsedMs,
+        };
+      },
+    };
+  }
+
+  function createPostureEngine(overrides) {
+    var options = Object.assign({}, DEFAULTS, overrides || {});
+    var session = null;
+
+    function requireSession() {
+      if (!session) throw new Error('Posture session is not calibrated');
+    }
+
+    function addElapsed(until) {
+      if (!session || session.lastAt === null) return;
+      var elapsed = Math.max(0, Math.min(options.maxGapMs, until - session.lastAt));
+      if (session.status === 'GOOD') session.goodMs += elapsed;
+      if (session.status === 'CAUTION') session.cautionMs += elapsed;
+      if (session.status === 'BAD') session.badMs += elapsed;
+      session.lastAt = until;
+    }
+
+    function calibrate(sample) {
+      var headPitch = finiteNumber(sample.headPitch, 'headPitch');
+      var torsoPitch = finiteNumber(sample.torsoPitch, 'torsoPitch');
+      var at = sample.at === undefined ? Date.now() : finiteNumber(sample.at, 'at');
+      var relative = headPitch - torsoPitch;
+
+      session = {
+        baselineRelative: relative,
+        startedAt: at,
+        lastAt: at,
+        headPitch: headPitch,
+        torsoPitch: torsoPitch,
+        relative: relative,
+        deviation: 0,
+        status: 'GOOD',
+        badSince: null,
+        alertLatched: false,
+        alerts: 0,
+        samples: 1,
+        goodMs: 0,
+        cautionMs: 0,
+        badMs: 0,
+      };
+      return snapshot();
+    }
+
+    function update(sample) {
+      requireSession();
+      var headPitch = finiteNumber(sample.headPitch, 'headPitch');
+      var torsoPitch = finiteNumber(sample.torsoPitch, 'torsoPitch');
+      var at = sample.at === undefined ? Date.now() : finiteNumber(sample.at, 'at');
+      addElapsed(at);
+
+      var relative = headPitch - torsoPitch;
+      var deviation = Math.abs(relative - session.baselineRelative);
+      var nextStatus = classifyDeviation(deviation, options);
+      var alert = false;
+
+      if (nextStatus === 'BAD') {
+        if (session.status !== 'BAD' || session.badSince === null) {
+          session.badSince = at;
+          session.alertLatched = false;
+        }
+        if (!session.alertLatched && at - session.badSince >= options.badHoldMs) {
+          session.alertLatched = true;
+          session.alerts += 1;
+          alert = true;
+        }
+      } else {
+        session.badSince = null;
+        session.alertLatched = false;
+      }
+
+      session.headPitch = headPitch;
+      session.torsoPitch = torsoPitch;
+      session.relative = relative;
+      session.deviation = deviation;
+      session.status = nextStatus;
+      session.samples += 1;
+
+      var result = snapshot();
+      result.alert = alert;
+      return result;
+    }
+
+    function snapshot() {
+      requireSession();
+      var durationMs = session.goodMs + session.cautionMs + session.badMs;
+      var badHoldElapsedMs = session.status === 'BAD' && session.badSince !== null
+        ? Math.max(0, session.lastAt - session.badSince)
+        : 0;
+      return {
+        baselineRelative: session.baselineRelative,
+        headPitch: session.headPitch,
+        torsoPitch: session.torsoPitch,
+        relative: session.relative,
+        deviation: session.deviation,
+        status: session.status,
+        badHoldElapsedMs: badHoldElapsedMs,
+        badHoldRemainingMs: Math.max(0, options.badHoldMs - badHoldElapsedMs),
+        alert: false,
+        alerts: session.alerts,
+        samples: session.samples,
+        durationMs: durationMs,
+        goodMs: session.goodMs,
+        cautionMs: session.cautionMs,
+        badMs: session.badMs,
+        goodPercent: durationMs ? Math.round((session.goodMs / durationMs) * 100) : 100,
+      };
+    }
+
+    function finish(at) {
+      requireSession();
+      addElapsed(at === undefined ? Date.now() : finiteNumber(at, 'at'));
+      return snapshot();
+    }
+
+    return {
+      calibrate: calibrate,
+      update: update,
+      snapshot: snapshot,
+      finish: finish,
+      options: Object.assign({}, options),
+    };
+  }
+
+  return {
+    DEFAULTS: DEFAULTS,
+    classifyDeviation: classifyDeviation,
+    createHeadCalibrator: createHeadCalibrator,
+    createPostureEngine: createPostureEngine,
+    postureAnimationFrame: postureAnimationFrame,
+  };
+});
