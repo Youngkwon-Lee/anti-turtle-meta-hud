@@ -28,6 +28,31 @@ npm start
 
 Open <http://127.0.0.1:3000/?demo=1&source=head> for a sensor-free HUD preview.
 
+## Add the web app in Meta AI
+
+This device flow requires **Meta Display Glasses with Web apps support**. The standard Ray-Ban Meta camera is not exposed to ordinary browser pages.
+
+### Option A — scan once (recommended for a solo demo)
+
+Scan this QR code with the phone that has the Meta AI app and the glasses paired. The deep link opens Meta AI and adds the stable public web app URL.
+
+![QR code for adding Anti Turtle Meta HUD in the Meta AI app](docs/meta-ai-webapp-qr.png)
+
+The QR uses the default `head-demo` session. Because the public relay is unauthenticated, use the manual option with a unique, non-sensitive session label when several people are testing.
+
+### Option B — add it manually
+
+1. Open the **Meta AI app** on the paired phone.
+2. Go to **Devices → Display Glasses settings**.
+3. Open **App connections → Web apps → Add a web app**.
+4. Enter the name `Anti Turtle Meta HUD`.
+5. Enter `https://stage-codex-bridge-head-only.vercel.app/?headonly=1&session=team_demo`, replacing `team_demo` with the same non-sensitive session label used on the Mac.
+6. Save the web app, then open it on the glasses.
+7. Select **START HEAD IMU**, allow Motion & Orientation access if prompted, and hold a comfortable neutral posture while calibration completes.
+8. On the Mac, open `https://stage-codex-bridge-head-only.vercel.app/?camera=1&source=head&session=team_demo` with the matching session label.
+
+The Mac camera provides the live video background; the glasses send the calibrated head-orientation telemetry. If the menu-bar app shows `○ --`, confirm that both devices use the same session and that **START HEAD IMU** is still running on the glasses.
+
 ## Head-only live flow
 
 Use one non-sensitive session label on every device:
