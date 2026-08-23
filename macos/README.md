@@ -29,4 +29,31 @@ Use `--dry-run` to print notifications without opening Notification Center, and 
 
 macOS may ask to allow notifications from the terminal or Script Editor the first time. Open **System Settings → Notifications** if they do not appear.
 
+## Menu bar status
+
+`AntiTurtleMenu.swift` shows the fresh HEAD or HYBRID angle in the macOS menu bar and keeps the warning/recovery notifications in the same process. The status uses native macOS colors:
+
+- green: stable;
+- yellow: pending;
+- orange: warning;
+- red: intervention;
+- gray: disconnected or stale.
+
+Install the dependency-free app bundle with the Swift compiler included in macOS Command Line Tools (the full Xcode app is not required):
+
+```bash
+zsh macos/install_menu_bar.sh
+```
+
+Launch it with the same deployment and session label used by the glasses:
+
+```bash
+open "$HOME/Applications/Anti Turtle Menu.app" --args \
+  --base-url https://YOUR_DEPLOYMENT.example \
+  --session team_demo \
+  --mode HEAD
+```
+
+The default endpoint is the public HEAD-only staging deployment with the `head-demo` session. Click the menu-bar angle to inspect the state, open the matching camera HUD, toggle alerts, or quit. Run the binary with `--check` to validate an endpoint without opening the UI.
+
 This is a wellness prototype, not a medical alarm. Do not use personal or clinical identifiers as the public demo `session` value.

@@ -1,6 +1,6 @@
 # Anti Turtle Meta HUD
 
-Open-source posture-coaching prototype for Meta Display glasses, a browser camera HUD, and native macOS notifications.
+Open-source posture-coaching prototype for Meta Display glasses, a browser camera HUD, and native macOS notifications and menu-bar status.
 
 The glasses use device orientation as a **personal head-tilt baseline**. A relay endpoint lets another browser or a colleague's Mac view the latest HEAD/HYBRID state using the same session label.
 
@@ -13,7 +13,7 @@ The glasses use device orientation as a **personal head-tilt baseline**. A relay
 - HEAD-only and HEAD + torso HYBRID relay modes
 - live Mac/desktop camera HUD
 - session-isolated, ordered telemetry with Redis support
-- dependency-free macOS Notification Center receiver
+- dependency-free macOS Notification Center receiver and live menu-bar angle
 - Node and Python tests
 
 ## Quick start
@@ -57,6 +57,8 @@ python3 macos/anti_turtle_notify.py \
 ```
 
 The default policy polls every 500 ms, ignores stale telemetry, alerts after three seconds of a warning state, and suppresses duplicate alerts for 30 seconds. It stores no telemetry locally. See [macos/README.md](macos/README.md).
+
+For a persistent native status, install `macos/AntiTurtleMenu.swift` with `zsh macos/install_menu_bar.sh`. The menu bar shows a colored live angle, exposes connection details, opens the matching HUD, and can enable or disable the same posture notifications. Full Xcode is not required; macOS Command Line Tools are sufficient.
 
 ## Hybrid mode
 
