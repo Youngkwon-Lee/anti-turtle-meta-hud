@@ -1,5 +1,7 @@
 # Anti Turtle Meta HUD
 
+[![CI](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml)
+
 Open-source posture-coaching prototype for Meta Display glasses, a browser camera HUD, and native macOS notifications and menu-bar status.
 
 The glasses use device orientation as a **personal head-tilt baseline**. A relay endpoint lets another browser or a colleague's Mac view the latest HEAD/HYBRID state using the same session label.
@@ -123,6 +125,8 @@ Head orientation is not CVA. An IMU in glasses cannot locate the tragus or C7 an
 ## Project status
 
 This is an experimental prototype. Device support, browser sensor permissions, and Meta Display Web App behavior may change. Test on the intended glasses and operating system before relying on a release.
+
+The current milestone is the `v0.1.0` research-prototype release candidate. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), and [open-source review](docs/OPEN_SOURCE_REVIEW.md) before extending the measurement or device scope.
 
 ## Contributing and license
 

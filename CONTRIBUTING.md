@@ -16,6 +16,15 @@ npm run check
 git diff --check
 ```
 
+On macOS, changes to the native menu-bar app must also pass:
+
+```bash
+xcrun swiftc -typecheck \
+  -framework Cocoa \
+  -framework UserNotifications \
+  macos/AntiTurtleMenu.swift
+```
+
 ## Design and device evidence
 
 For HUD changes, include the target viewport, browser, state, and a screenshot that contains no personal or clinical information. State clearly whether the change was tested on physical Meta Display glasses.
