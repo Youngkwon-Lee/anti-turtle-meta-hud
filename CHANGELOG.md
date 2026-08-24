@@ -4,13 +4,7 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
-### Added
-
-- Cross-platform CI for Node, Python, and the native Swift menu-bar source.
-- Public roadmap, release checklist, and open-source reuse review.
-- Structured bug, device compatibility, and pull-request templates.
-
-## [0.1.0] - TBD
+## [0.1.0] - 2026-08-24
 
 ### Added
 
@@ -19,5 +13,9 @@ All notable changes to this project are documented in this file. The format foll
 - Desktop camera receiver with fresh/stale fallback behavior.
 - Native macOS posture notifications and live menu-bar angle.
 - Meta AI setup instructions, privacy warnings, clinical limits, and Apache-2.0 project documentation.
+- Cross-platform CI for Node, Python, and the native Swift menu-bar source.
+- Public roadmap, release checklist, and open-source reuse review.
+- Structured bug, device compatibility, and pull-request templates.
 
 [Unreleased]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0
