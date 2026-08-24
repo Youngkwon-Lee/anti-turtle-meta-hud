@@ -47,11 +47,40 @@
   function createHeadCalibrator(overrides) {
     var options = Object.assign({
       warmupMs: 300,
-      sampleMs: 700,
-      minSamples: 6,
+      sampleMs: 3000,
+      minSamples: 30,
+      maxRangeDeg: 2.5,
+      maxStepDeg: 1.2,
     }, overrides || {});
     var startedAt = null;
+    var stableStartedAt = null;
     var samples = [];
+    var lastPitch = null;
+
+    function result(status, elapsedMs, ready) {
+      var stableElapsedMs = stableStartedAt === null
+        ? 0
+        : Math.max(0, elapsedMs - (stableStartedAt - startedAt));
+      var timeProgress = options.sampleMs > 0
+        ? Math.min(1, stableElapsedMs / options.sampleMs)
+        : 1;
+      var sampleProgress = options.minSamples > 0
+        ? Math.min(1, samples.length / options.minSamples)
+        : 1;
+      var rangeDeg = samples.length
+        ? Math.max.apply(null, samples) - Math.min.apply(null, samples)
+        : 0;
+      return {
+        ready: ready,
+        status: status,
+        baseline: ready ? median(samples) : null,
+        sampleCount: samples.length,
+        elapsedMs: elapsedMs,
+        stableElapsedMs: stableElapsedMs,
+        progress: Math.min(timeProgress, sampleProgress),
+        rangeDeg: rangeDeg,
+      };
+    }
 
     return {
       add: function (value, at) {
@@ -59,16 +88,55 @@
         var timestamp = at === undefined ? Date.now() : finiteNumber(at, 'at');
         if (startedAt === null) startedAt = timestamp;
         var elapsedMs = Math.max(0, timestamp - startedAt);
-        if (elapsedMs >= options.warmupMs) samples.push(pitch);
-        var ready = elapsedMs >= options.warmupMs + options.sampleMs &&
-          samples.length >= options.minSamples;
-        return {
-          ready: ready,
-          baseline: ready ? median(samples) : null,
-          sampleCount: samples.length,
-          elapsedMs: elapsedMs,
-        };
+        if (elapsedMs < options.warmupMs) {
+          lastPitch = pitch;
+          return result('WARMUP', elapsedMs, false);
+        }
+
+        if (stableStartedAt === null) {
+          stableStartedAt = timestamp;
+          samples = [pitch];
+          lastPitch = pitch;
+          return result('HOLD_STILL', elapsedMs, false);
+        }
+
+        var movedByStep = lastPitch !== null && Math.abs(pitch - lastPitch) > options.maxStepDeg;
+        var candidateSamples = samples.concat([pitch]);
+        var candidateRange = Math.max.apply(null, candidateSamples) - Math.min.apply(null, candidateSamples);
+        if (movedByStep || candidateRange > options.maxRangeDeg) {
+          stableStartedAt = timestamp;
+          samples = [pitch];
+          lastPitch = pitch;
+          return result('MOVING', elapsedMs, false);
+        }
+
+        samples.push(pitch);
+        lastPitch = pitch;
+        var stableElapsedMs = timestamp - stableStartedAt;
+        var ready = stableElapsedMs >= options.sampleMs && samples.length >= options.minSamples;
+        return result(ready ? 'READY' : 'HOLD_STILL', elapsedMs, ready);
       },
+    };
+  }
+
+  function evaluateHeadContinuity(previousPitch, pitch, previousAt, at, overrides) {
+    var options = Object.assign({
+      maxGapMs: 2000,
+      maxJumpDeg: 45,
+    }, overrides || {});
+    var currentPitch = finiteNumber(pitch, 'headPitch');
+    var currentAt = finiteNumber(at, 'at');
+    if (previousPitch === null || previousPitch === undefined ||
+        previousAt === null || previousAt === undefined ||
+        !Number.isFinite(Number(previousPitch)) || !Number.isFinite(Number(previousAt))) {
+      return { status: 'FRESH', gapMs: 0, jumpDeg: 0 };
+    }
+    var gapMs = Math.max(0, currentAt - Number(previousAt));
+    var jumpDeg = Math.abs(currentPitch - Number(previousPitch));
+    return {
+      status: gapMs > options.maxGapMs ? 'GAP' : jumpDeg > options.maxJumpDeg ? 'JUMP' : 'FRESH',
+      gapMs: gapMs,
+      jumpDeg: jumpDeg,
     };
   }
 
@@ -200,6 +268,7 @@
     classifyDeviation: classifyDeviation,
     createHeadCalibrator: createHeadCalibrator,
     createPostureEngine: createPostureEngine,
+    evaluateHeadContinuity: evaluateHeadContinuity,
     postureAnimationFrame: postureAnimationFrame,
   };
 });

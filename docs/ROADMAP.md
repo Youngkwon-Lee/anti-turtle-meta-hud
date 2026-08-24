@@ -19,7 +19,7 @@ Goal: make setup, calibration, and recovery understandable without changing the 
 
 - split the browser client into sensor, estimator, transport, renderer, camera, and notification boundaries;
 - add recorded/synthetic telemetry fixtures and browser end-to-end tests;
-- add calibration stability, explicit recalibration, glasses re-seat, drift, permission, and stale states;
+- add calibration stability, explicit recalibration, glasses re-seat, drift, permission, and stale states; the first implementation checkpoint is documented in [CALIBRATION_RELIABILITY_V0_2.md](CALIBRATION_RELIABILITY_V0_2.md);
 - add configurable thresholds, hold time, cooldown, auto-pause, and optional local-only session summaries;
 - test setup with 5–8 participants and record time to first live angle, setup completion, false alerts, and recovery success.
 

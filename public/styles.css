@@ -759,6 +759,13 @@ button {
 .presentation-hud[data-status="good"] { --hud-signal: var(--lime); }
 .presentation-hud[data-status="caution"] { --hud-signal: var(--amber); }
 .presentation-hud[data-status="bad"] { --hud-signal: var(--danger); }
+.presentation-hud[data-status="stale"],
+.presentation-hud[data-status="fit_check"] { --hud-signal: var(--amber); }
+
+.presentation-hud[data-status="calibrating"] .hud-telemetry,
+.presentation-hud[data-status="calibrating"] .hud-sensor-pair {
+  visibility: hidden;
+}
 
 .camera-feed,
 .camera-shade {
@@ -1080,12 +1087,70 @@ body.lottie-avatar-ready .hud-posture-figure {
   font-variant-numeric: tabular-nums;
 }
 
+.hud-calibration {
+  position: absolute;
+  z-index: 3;
+  top: 345px;
+  left: 327px;
+  width: 230px;
+  padding: 8px 10px 10px;
+  box-sizing: border-box;
+  border: 1px solid rgba(99, 225, 224, 0.5);
+  border-radius: 4px 12px 4px 4px;
+  background: rgba(10, 27, 31, 0.9);
+}
+
+.hud-calibration[hidden] {
+  display: none;
+}
+
+.hud-calibration-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.hud-calibration-copy strong,
+.hud-calibration-copy span {
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.hud-calibration-copy span {
+  color: var(--hud-signal);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-calibration-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgba(247, 255, 255, 0.16);
+}
+
+.hud-calibration-track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hud-signal);
+  box-shadow: 0 0 10px rgba(99, 225, 224, 0.72);
+  transition: width 120ms linear;
+}
+
 body.head-only-mode .hud-sensor-pair > div:last-child {
   display: none;
 }
 
 body.head-only-mode .hud-sensor-pair > div:first-child {
   min-height: 54px;
+}
+
+body.head-only-mode .hud-sensor-pair {
+  top: 405px;
 }
 
 .hud-head-action {

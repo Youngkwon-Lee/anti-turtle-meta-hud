@@ -2,6 +2,7 @@
 .env*
 !.env.example
 .playwright-cli/
+.artifacts/
 output/
 qr-*.png
 __pycache__/
