@@ -1,0 +1,60 @@
+name: Device compatibility report
+description: Share a sanitized physical-device or browser compatibility result.
+title: "[Device]: "
+labels:
+  - device-compatibility
+body:
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware
+      placeholder: Meta Display glasses and MacBook Air M3
+    validations:
+      required: true
+
+  - type: input
+    id: software
+    attributes:
+      label: OS, browser, and project version
+      placeholder: macOS 15 / Chrome 140 / commit SHA
+    validations:
+      required: true
+
+  - type: dropdown
+    id: physical
+    attributes:
+      label: Test type
+      options:
+        - Physical glasses
+        - Desktop or phone browser only
+        - Demo or simulated telemetry
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: features
+    attributes:
+      label: Features exercised
+      options:
+        - label: Motion permission and calibration
+        - label: HEAD relay and stale fallback
+        - label: HYBRID head and torso relay
+        - label: Camera receiver
+        - label: macOS notifications
+        - label: macOS menu-bar app
+
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Describe what worked, failed, and how recovery behaved. Do not attach faces or identifying telemetry.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: This report contains no credentials, identifying session labels, faces, or health information.
+          required: true
