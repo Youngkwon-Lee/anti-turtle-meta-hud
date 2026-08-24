@@ -126,7 +126,7 @@ Head orientation is not CVA. An IMU in glasses cannot locate the tragus or C7 an
 
 This is an experimental prototype. Device support, browser sensor permissions, and Meta Display Web App behavior may change. Test on the intended glasses and operating system before relying on a release.
 
-The current milestone is the public [`v0.1.0`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), and [open-source review](docs/OPEN_SOURCE_REVIEW.md) before extending the measurement or device scope.
+The current milestone is the public [`v0.1.0`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), [open-source review](docs/OPEN_SOURCE_REVIEW.md), and [Meta Ray-Ban Display ecosystem map](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md) before extending the measurement or device scope.
 
 ## Contributing and license
 
