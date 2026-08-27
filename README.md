@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml)
 
-[Watch the 48-second live HUD demo on YouTube](https://youtube.com/shorts/-UARuJDGOuQ)
+[Watch the narrated project demo on YouTube](https://youtu.be/k-gM6kyfsp4)
 
 Open-source posture-coaching prototype for Meta Display glasses, a browser camera HUD, and native macOS notifications and menu-bar status.
 

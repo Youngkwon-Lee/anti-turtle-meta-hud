@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml)
 
-[48초 실시간 HUD 데모를 YouTube에서 보기](https://youtube.com/shorts/-UARuJDGOuQ)
+[영문 음성 프로젝트 데모를 YouTube에서 보기](https://youtu.be/k-gM6kyfsp4)
 
 Meta Display 글래스용 자세 코칭 HUD, 브라우저 카메라 HUD, macOS 알림과 메뉴 막대 상태 표시를 포함한 오픈소스 프로토타입입니다.
 
