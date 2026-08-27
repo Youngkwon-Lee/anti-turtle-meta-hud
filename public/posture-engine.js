@@ -48,7 +48,10 @@
     var options = Object.assign({
       warmupMs: 300,
       sampleMs: 3000,
-      minSamples: 30,
+      // DeviceOrientation is commonly delivered at about 5 Hz on the glasses.
+      // Ten samples still rejects sparse/noisy holds while allowing the
+      // three-second continuous window to complete at that delivery rate.
+      minSamples: 10,
       maxRangeDeg: 2.5,
       maxStepDeg: 1.2,
       maxGapMs: 2000,

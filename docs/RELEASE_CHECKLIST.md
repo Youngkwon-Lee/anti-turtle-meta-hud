@@ -5,7 +5,7 @@ Do not publish the `v0.1.1` tag or GitHub release until every required gate belo
 ## Automated gates
 
 - [ ] GitHub Actions is green for the exact release commit.
-- [x] `npm test` passes with 59 Node tests and 7 Python tests on Node.js 20+ and Python 3.10+.
+- [x] `npm test` passes with 60 Node tests and 7 Python tests on Node.js 20+ and Python 3.10+.
 - [x] `npm run check` passes.
 - [x] The native menu-bar source passes the documented Swift typecheck on macOS.
 - [x] `git diff --check` reports no whitespace errors.

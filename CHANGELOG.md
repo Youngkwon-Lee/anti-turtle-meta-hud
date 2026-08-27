@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file. The format foll
 ### Changed
 
 - Replaced instant head calibration with a warm-up and continuous three-second stable hold using a median baseline.
+- Allowed the three-second hold to complete with lower-rate orientation streams observed on the physical display glasses.
 - Kept the HEAD value unavailable as `--°` until calibration succeeds.
 - Added visible calibration progress, movement rejection, and an explicit recalibration action.
 - Required recalibration after a sensor gap or a large orientation jump that may indicate the glasses were removed or reseated.

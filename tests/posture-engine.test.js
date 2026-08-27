@@ -65,6 +65,20 @@ test('head calibration requires a continuous stable hold', function () {
   assert.ok(Math.abs(results[results.length - 1].baseline - 62.1) < 0.01);
 });
 
+test('head calibration completes after a three-second hold at 5Hz', function () {
+  var calibrator = posture.createHeadCalibrator();
+  var result = null;
+
+  for (var at = 0; at <= 3400; at += 200) {
+    result = calibrator.add(62 + (at % 400 === 0 ? 0.1 : 0), at);
+  }
+
+  assert.equal(result.ready, true);
+  assert.equal(result.status, 'READY');
+  assert.ok(result.stableElapsedMs >= 3000);
+  assert.ok(result.sampleCount >= 10);
+});
+
 test('head calibration rejects movement and restarts the hold window', function () {
   var calibrator = posture.createHeadCalibrator({
     warmupMs: 300,
