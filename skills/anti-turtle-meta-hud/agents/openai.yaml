@@ -1,0 +1,4 @@
+interface:
+  display_name: "Anti Turtle Meta HUD"
+  short_description: "Safely extend the Meta Display posture HUD"
+  default_prompt: "Use $anti-turtle-meta-hud to implement this feature without breaking calibration, telemetry, device lifecycle, or clinical-claim boundaries."

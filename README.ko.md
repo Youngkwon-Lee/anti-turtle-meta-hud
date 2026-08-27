@@ -165,6 +165,24 @@ UPSTASH_REDIS_REST_TOKEN
 
 현재 분리된 오픈소스 저장소는 `Youngkwon-Lee`가 유지관리하고 있습니다. 이 저장소의 Git 기록에는 해커톤 과정에서 이루어진 디자인, 하드웨어, 운영, 발표 등 코드 외 기여가 모두 나타나지 않을 수 있습니다.
 
+## AI 활용 개발
+
+코딩 에이전트가 저장소 전체에서 따라야 할 규칙은 [`AGENTS.md`](AGENTS.md)에 있습니다. Meta Display UI, IMU 보정, telemetry, macOS, 연구 범위 확장을 안전하게 구현하기 위한 재사용 가능한 Codex 스킬은 [`skills/anti-turtle-meta-hud/SKILL.md`](skills/anti-turtle-meta-hud/SKILL.md)에 포함되어 있습니다.
+
+스킬을 로컬에 설치한 뒤 `$anti-turtle-meta-hud`로 호출하세요.
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R skills/anti-turtle-meta-hud "${CODEX_HOME:-$HOME/.codex}/skills/"
+```
+
+요청 예시:
+
+```text
+$anti-turtle-meta-hud를 사용해 신뢰도 기준이 있는 몸통 센서 어댑터를 추가하고,
+HEAD/HYBRID 호환성을 유지하며, 테스트와 실제 장치 미검증 항목까지 보고해 주세요.
+```
+
 ## 기여와 라이선스
 
 기여는 [CONTRIBUTING.md](CONTRIBUTING.md)의 안내에 따라 환영합니다. 프로젝트는 [Apache License 2.0](LICENSE)으로 공개됩니다. 외부 라이브러리와 생성된 자산 관련 내용은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 정리되어 있습니다.

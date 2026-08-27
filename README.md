@@ -165,6 +165,24 @@ The original TOYTHON Anti Turtle hackathon team was:
 
 This extracted open-source repository is currently maintained by `Youngkwon-Lee`. Its Git history may not represent design, hardware, operations, presentation, and other non-code contributions made during the hackathon.
 
+## AI-assisted development
+
+Repository-wide instructions for coding agents are in [`AGENTS.md`](AGENTS.md). A reusable Codex skill for Meta Display UI, IMU calibration, telemetry, macOS, and research-safe extensions is included at [`skills/anti-turtle-meta-hud/SKILL.md`](skills/anti-turtle-meta-hud/SKILL.md).
+
+Install the skill locally, then invoke it as `$anti-turtle-meta-hud`:
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R skills/anti-turtle-meta-hud "${CODEX_HOME:-$HOME/.codex}/skills/"
+```
+
+Example request:
+
+```text
+Use $anti-turtle-meta-hud to add a confidence-gated torso sensor adapter,
+preserve HEAD/HYBRID compatibility, add tests, and report physical-device gaps.
+```
+
 ## Contributing and license
 
 Contributions are welcome under [CONTRIBUTING.md](CONTRIBUTING.md). The project is licensed under the [Apache License 2.0](LICENSE). Third-party and generated-asset notes are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
