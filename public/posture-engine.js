@@ -36,6 +36,17 @@
     return Math.round(Math.min(maximum, value) / maximum * (frames - 1));
   }
 
+  function signedPostureAnimationFrame(signedDeviation, totalFrames, maxDeviation) {
+    var value = finiteNumber(signedDeviation, 'signedDeviation');
+    var frames = Math.max(1, Math.round(finiteNumber(totalFrames, 'totalFrames')));
+    var maximum = maxDeviation === undefined
+      ? 25
+      : Math.max(1, finiteNumber(maxDeviation, 'maxDeviation'));
+    var midpoint = (frames - 1) / 2;
+    var bounded = Math.max(-maximum, Math.min(maximum, value));
+    return Math.round(midpoint + (bounded / maximum) * midpoint);
+  }
+
   // Meta Display glasses report beta increasing during backward extension.
   // The HUD visual axis uses forward flexion as positive, so invert only the
   // presentation direction while preserving the raw and calibrated values.
@@ -292,5 +303,6 @@
     evaluateHeadContinuity: evaluateHeadContinuity,
     postureAnimationFrame: postureAnimationFrame,
     postureVisualDeviation: postureVisualDeviation,
+    signedPostureAnimationFrame: signedPostureAnimationFrame,
   };
 });

@@ -152,6 +152,15 @@ test('maps calibrated posture deviation to a bounded Lottie frame', function () 
   assert.equal(posture.postureAnimationFrame(25, 61), 60);
 });
 
+test('maps signed visual posture across extension, neutral, and flexion frames', function () {
+  assert.equal(posture.signedPostureAnimationFrame(-25, 121), 0);
+  assert.equal(posture.signedPostureAnimationFrame(-12.5, 121), 30);
+  assert.equal(posture.signedPostureAnimationFrame(0, 121), 60);
+  assert.equal(posture.signedPostureAnimationFrame(12.5, 121), 90);
+  assert.equal(posture.signedPostureAnimationFrame(25, 121), 120);
+  assert.equal(posture.signedPostureAnimationFrame(90, 121), 120);
+});
+
 test('fires one alert only after BAD persists for three seconds', function () {
   var engine = posture.createPostureEngine({ maxGapMs: 5000 });
   engine.calibrate({ headPitch: 0, torsoPitch: 0, at: 0 });

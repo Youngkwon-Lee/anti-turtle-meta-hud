@@ -366,13 +366,11 @@
     if (!Number.isFinite(signedValue)) signedValue = Number.isFinite(value) ? value : 0;
     var leanValue = window.AntiTurtleEngine.postureVisualDeviation(signedValue);
     elements.hudPostureFigure.style.setProperty('--hud-lean', Math.min(15, Math.max(0, leanValue * 0.72)) + 'deg');
-    var extensionDeg = Math.max(-15, Math.min(0, leanValue * 0.72));
-    elements.hudAnatomyAvatar.style.setProperty('--hud-extension', extensionDeg + 'deg');
     if (state.postureAnimationReady && state.postureAnimation && Number.isFinite(value)) {
       state.postureAnimation.goToAndStop(
-        window.AntiTurtleEngine.postureAnimationFrame(
-          Math.max(0, leanValue),
-          state.postureAnimation.totalFrames || 61
+        window.AntiTurtleEngine.signedPostureAnimationFrame(
+          leanValue,
+          state.postureAnimation.totalFrames || 121
         ),
         true
       );
@@ -388,7 +386,7 @@
         renderer: 'svg',
         loop: false,
         autoplay: false,
-        path: 'assets/posture-anatomy.lottie.json?v=20260827-bidirectional-avatar-1',
+        path: 'assets/posture-anatomy.lottie.json?v=20260827-anatomy-three-state-4',
         rendererSettings: {
           preserveAspectRatio: 'xMidYMid meet',
           progressiveLoad: false,
@@ -411,9 +409,9 @@
         Number.isFinite(signedDeviation) ? signedDeviation : 0
       );
       state.postureAnimation.goToAndStop(
-        window.AntiTurtleEngine.postureAnimationFrame(
-          Math.max(0, visualDeviation),
-          state.postureAnimation.totalFrames || 61
+        window.AntiTurtleEngine.signedPostureAnimationFrame(
+          visualDeviation,
+          state.postureAnimation.totalFrames || 121
         ),
         true
       );

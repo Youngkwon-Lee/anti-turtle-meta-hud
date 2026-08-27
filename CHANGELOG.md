@@ -14,6 +14,7 @@ All notable changes to this project are documented in this file. The format foll
 - Added visible calibration progress, movement rejection, and an explicit recalibration action.
 - Required recalibration after a sensor gap or a large orientation jump that may indicate the glasses were removed or reseated.
 - Preserved calibrated head-pitch direction and mapped the Meta Display beta convention so backward extension animates backward instead of flexing forward.
+- Replaced the rotated neutral-image approximation with dedicated extension, neutral, and forward anatomical endpoints.
 
 ### Added
 

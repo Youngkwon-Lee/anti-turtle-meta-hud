@@ -908,13 +908,6 @@ body.presentation-mode .toast {
   transition: opacity 180ms ease;
 }
 
-.hud-anatomy-avatar {
-  --hud-extension: 0deg;
-  transform: rotate(var(--hud-extension));
-  transform-origin: 48% 72%;
-  transition: opacity 180ms ease, transform 180ms ease;
-}
-
 .hud-anatomy-baseline {
   object-fit: contain;
   opacity: 0;
