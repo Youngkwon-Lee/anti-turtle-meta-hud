@@ -1,8 +1,14 @@
 'use strict';
 
 var assert = require('node:assert/strict');
+var fs = require('node:fs');
+var path = require('node:path');
 var test = require('node:test');
 var posture = require('../public/posture-engine');
+var calibrationReplays = JSON.parse(fs.readFileSync(
+  path.join(__dirname, 'fixtures', 'head-calibration-replays.json'),
+  'utf8'
+));
 
 test('classifies the Anti Turtle MVP thresholds', function () {
   assert.equal(posture.classifyDeviation(7.99, posture.DEFAULTS), 'GOOD');
@@ -18,7 +24,27 @@ test('calibration removes the initial head-to-torso offset', function () {
 
   assert.equal(calibrated.baselineRelative, 14);
   assert.equal(samePosture.deviation, 0);
+  assert.equal(samePosture.signedDeviation, 0);
   assert.equal(samePosture.status, 'GOOD');
+});
+
+test('preserves positive and negative direction while classifying absolute deviation', function () {
+  var engine = posture.createPostureEngine();
+  engine.calibrate({ headPitch: 60, torsoPitch: 0, at: 0 });
+
+  var positive = engine.update({ headPitch: 72, torsoPitch: 0, at: 100 });
+  var negative = engine.update({ headPitch: 50, torsoPitch: 0, at: 200 });
+
+  assert.equal(positive.signedDeviation, 12);
+  assert.equal(positive.deviation, 12);
+  assert.equal(negative.signedDeviation, -10);
+  assert.equal(negative.deviation, 10);
+  assert.equal(negative.status, 'CAUTION');
+});
+
+test('maps Meta Display beta extension to backward HUD motion', function () {
+  assert.equal(posture.postureVisualDeviation(12), -12);
+  assert.equal(posture.postureVisualDeviation(-10), 10);
 });
 
 test('head calibration ignores startup transients and uses a stable median', function () {
@@ -26,6 +52,8 @@ test('head calibration ignores startup transients and uses a stable median', fun
     warmupMs: 300,
     sampleMs: 700,
     minSamples: 4,
+    maxRangeDeg: 4,
+    maxStepDeg: 4,
   });
 
   assert.equal(calibrator.add(0, 0).ready, false);
@@ -40,6 +68,81 @@ test('head calibration ignores startup transients and uses a stable median', fun
   assert.equal(calibrated.sampleCount, 4);
 });
 
+test('head calibration requires a continuous stable hold', function () {
+  var calibrator = posture.createHeadCalibrator({
+    warmupMs: 300,
+    sampleMs: 3000,
+    minSamples: 6,
+  });
+  var results = calibrationReplays.stableNeutral.map(function (sample) {
+    return calibrator.add(sample[1], sample[0]);
+  });
+
+  assert.equal(results[0].status, 'WARMUP');
+  assert.equal(results[3].status, 'HOLD_STILL');
+  assert.equal(results[results.length - 1].ready, true);
+  assert.equal(results[results.length - 1].status, 'READY');
+  assert.ok(Math.abs(results[results.length - 1].baseline - 62.1) < 0.01);
+});
+
+test('head calibration completes after a three-second hold at 5Hz', function () {
+  var calibrator = posture.createHeadCalibrator();
+  var result = null;
+
+  for (var at = 0; at <= 3400; at += 200) {
+    result = calibrator.add(62 + (at % 400 === 0 ? 0.1 : 0), at);
+  }
+
+  assert.equal(result.ready, true);
+  assert.equal(result.status, 'READY');
+  assert.ok(result.stableElapsedMs >= 3000);
+  assert.ok(result.sampleCount >= 10);
+});
+
+test('head calibration rejects movement and restarts the hold window', function () {
+  var calibrator = posture.createHeadCalibrator({
+    warmupMs: 300,
+    sampleMs: 3000,
+    minSamples: 6,
+  });
+  var results = calibrationReplays.movementThenNeutral.map(function (sample) {
+    return calibrator.add(sample[1], sample[0]);
+  });
+
+  assert.equal(results[3].status, 'MOVING');
+  assert.equal(results[3].progress, 0);
+  assert.equal(results[results.length - 1].ready, true);
+  assert.ok(Math.abs(results[results.length - 1].baseline - 66.2) < 0.01);
+});
+
+test('head calibration rejects a sensor gap and restarts the continuous hold', function () {
+  var calibrator = posture.createHeadCalibrator({
+    warmupMs: 0,
+    sampleMs: 3000,
+    minSamples: 4,
+    maxGapMs: 2000,
+  });
+
+  calibrator.add(62, 0);
+  calibrator.add(62, 100);
+  calibrator.add(62, 200);
+  var afterGap = calibrator.add(62, 2501);
+
+  assert.equal(afterGap.ready, false);
+  assert.equal(afterGap.status, 'MOVING');
+  assert.equal(afterGap.sampleCount, 1);
+  assert.equal(calibrator.add(62, 3000).ready, false);
+  assert.equal(calibrator.add(62, 4000).ready, false);
+  assert.equal(calibrator.add(62, 5501).ready, true);
+});
+
+test('head continuity flags sensor gaps and large jumps', function () {
+  assert.equal(posture.evaluateHeadContinuity(null, 62, null, 100).status, 'FRESH');
+  assert.equal(posture.evaluateHeadContinuity(62, 63, 100, 200).status, 'FRESH');
+  assert.equal(posture.evaluateHeadContinuity(62, 63, 100, 2201).status, 'GAP');
+  assert.equal(posture.evaluateHeadContinuity(62, 108, 100, 200).status, 'JUMP');
+});
+
 test('maps calibrated posture deviation to a bounded Lottie frame', function () {
   assert.equal(posture.postureAnimationFrame(0, 60), 0);
   assert.equal(posture.postureAnimationFrame(12.5, 60), 30);
@@ -47,6 +150,15 @@ test('maps calibrated posture deviation to a bounded Lottie frame', function () 
   assert.equal(posture.postureAnimationFrame(90, 60), 59);
   assert.equal(posture.postureAnimationFrame(-10, 60), 24);
   assert.equal(posture.postureAnimationFrame(25, 61), 60);
+});
+
+test('maps signed visual posture across extension, neutral, and flexion frames', function () {
+  assert.equal(posture.signedPostureAnimationFrame(-25, 121), 0);
+  assert.equal(posture.signedPostureAnimationFrame(-12.5, 121), 30);
+  assert.equal(posture.signedPostureAnimationFrame(0, 121), 60);
+  assert.equal(posture.signedPostureAnimationFrame(12.5, 121), 90);
+  assert.equal(posture.signedPostureAnimationFrame(25, 121), 120);
+  assert.equal(posture.signedPostureAnimationFrame(90, 121), 120);
 });
 
 test('fires one alert only after BAD persists for three seconds', function () {

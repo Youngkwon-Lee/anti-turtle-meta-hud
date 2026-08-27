@@ -10,10 +10,12 @@
     torsoStaleMs: 2000,
     telemetryPollMs: 900,
     presentationTelemetryPollMs: 100,
-    telemetryPostMs: 100,
+    telemetryPostMs: 200,
     telemetryStaleMs: 1500,
     uiIntervalMs: 50,
     demoIntervalMs: 100,
+    headReseatGapMs: 2000,
+    headReseatJumpDeg: 45,
   };
 
   var state = {
@@ -70,6 +72,10 @@
     headImuMode: false,
     headOnlyMode: false,
     headCalibration: null,
+    headNeedsCalibration: false,
+    lastRawHeadPitch: null,
+    lastHeadSampleAt: null,
+    headReliability: 'idle',
     postureAnimation: null,
     postureAnimationReady: false,
   };
@@ -143,6 +149,11 @@
     elements.headImuAction = document.getElementById('head-imu-action');
     elements.headImuActionLabel = document.getElementById('head-imu-action-label');
     elements.hudSensorPair = document.getElementById('hud-sensor-pair');
+    elements.hudCalibration = document.getElementById('hud-calibration');
+    elements.hudCalibrationLabel = document.getElementById('hud-calibration-label');
+    elements.hudCalibrationDetail = document.getElementById('hud-calibration-detail');
+    elements.hudCalibrationProgress = document.getElementById('hud-calibration-progress');
+    elements.hudCalibrationFill = document.getElementById('hud-calibration-fill');
     elements.hudSignature = document.getElementById('hud-signature');
   }
 
@@ -318,17 +329,25 @@
   var UART_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
   var UART_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-  function renderPresentationHud(deviation, displayStatus, holdSeconds) {
+  function renderPresentationHud(deviation, displayStatus, holdSeconds, signedDeviation) {
     if (!elements.presentationHud) return;
-    var value = Number(deviation);
+    var value = deviation === null || deviation === undefined ? NaN : Number(deviation);
     var hold = Number(holdSeconds);
     var status = displayStatus || 'READY';
     var stateLabel = status === 'GOOD'
       ? 'GOOD'
-      : status === 'CAUTION' ? 'HOLD' : status === 'BAD' ? 'CORRECT NOW' : 'READY';
+      : status === 'CAUTION' ? 'HOLD'
+        : status === 'BAD' ? 'CORRECT NOW'
+          : status === 'CALIBRATING' ? 'CALIBRATING'
+            : status === 'STALE' ? 'SENSOR STALE'
+              : status === 'FIT_CHECK' ? 'CHECK FIT' : 'READY';
     var cue = status === 'GOOD'
       ? '현재 자세를 유지하세요'
-      : status === 'CAUTION' ? '턱을 가볍게 당기세요' : status === 'BAD' ? '턱을 당기세요' : '자세를 확인합니다';
+      : status === 'CAUTION' ? '턱을 가볍게 당기세요'
+        : status === 'BAD' ? '턱을 당기세요'
+          : status === 'CALIBRATING' ? '정면을 보고 3초 유지하세요'
+            : status === 'STALE' ? '센서가 멈췄습니다. 재보정하세요'
+              : status === 'FIT_CHECK' ? '안경 위치를 확인하고 재보정하세요' : '자세를 확인합니다';
 
     elements.presentationHud.dataset.status = status.toLowerCase();
     elements.hudAngle.textContent = Number.isFinite(value) ? value.toFixed(1) : '--';
@@ -343,12 +362,15 @@
       : (state.hybridMode || state.presentationSource === 'ble') && !hasFreshTorso()
       ? '--°'
       : formatAngle(state.lastTorsoPitch);
-    elements.hudPostureFigure.style.setProperty('--hud-lean', Math.min(15, Math.max(0, value * 0.72)) + 'deg');
+    var signedValue = Number(signedDeviation);
+    if (!Number.isFinite(signedValue)) signedValue = Number.isFinite(value) ? value : 0;
+    var leanValue = window.AntiTurtleEngine.postureVisualDeviation(signedValue);
+    elements.hudPostureFigure.style.setProperty('--hud-lean', Math.min(15, Math.max(0, leanValue * 0.72)) + 'deg');
     if (state.postureAnimationReady && state.postureAnimation && Number.isFinite(value)) {
       state.postureAnimation.goToAndStop(
-        window.AntiTurtleEngine.postureAnimationFrame(
-          value,
-          state.postureAnimation.totalFrames || 61
+        window.AntiTurtleEngine.signedPostureAnimationFrame(
+          leanValue,
+          state.postureAnimation.totalFrames || 121
         ),
         true
       );
@@ -364,7 +386,7 @@
         renderer: 'svg',
         loop: false,
         autoplay: false,
-        path: 'assets/posture-anatomy.lottie.json?v=20260822-anatomy-avatar-2',
+        path: 'assets/posture-anatomy.lottie.json?v=20260827-anatomy-three-state-4',
         rendererSettings: {
           preserveAspectRatio: 'xMidYMid meet',
           progressiveLoad: false,
@@ -380,10 +402,16 @@
       var deviation = state.externalTelemetry
         ? Number(state.externalTelemetry.forwardDeg)
         : state.lastSnapshot ? Number(state.lastSnapshot.deviation) : 0;
+      var signedDeviation = state.externalTelemetry
+        ? Number(state.externalTelemetry.signedDeviationDeg)
+        : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : deviation;
+      var visualDeviation = window.AntiTurtleEngine.postureVisualDeviation(
+        Number.isFinite(signedDeviation) ? signedDeviation : 0
+      );
       state.postureAnimation.goToAndStop(
-        window.AntiTurtleEngine.postureAnimationFrame(
-          Number.isFinite(deviation) ? deviation : 0,
-          state.postureAnimation.totalFrames || 61
+        window.AntiTurtleEngine.signedPostureAnimationFrame(
+          visualDeviation,
+          state.postureAnimation.totalFrames || 121
         ),
         true
       );
@@ -945,7 +973,13 @@
     }
     elements.badHold.textContent = badDurationS.toFixed(1) + 's';
     elements.thresholdFill.style.width = Math.min(100, Math.max(0, (forwardDeg / 20) * 100)) + '%';
-    renderPresentationHud(forwardDeg, displayStatus, badDurationS);
+    var signedDeviation = Number(message.signedDeviationDeg);
+    renderPresentationHud(
+      forwardDeg,
+      displayStatus,
+      badDurationS,
+      Number.isFinite(signedDeviation) ? signedDeviation : forwardDeg
+    );
     return true;
   }
 
@@ -960,7 +994,12 @@
     elements.torsoPitch.textContent = formatAngle(snapshot.torsoPitch);
     elements.badHold.textContent = (snapshot.badHoldElapsedMs / 1000).toFixed(1) + 's';
     elements.thresholdFill.style.width = Math.min(100, (snapshot.deviation / 20) * 100) + '%';
-    renderPresentationHud(snapshot.deviation, snapshot.status, snapshot.badHoldElapsedMs / 1000);
+    renderPresentationHud(
+      snapshot.deviation,
+      snapshot.status,
+      snapshot.badHoldElapsedMs / 1000,
+      snapshot.signedDeviation
+    );
     var relayState = snapshot.status === 'GOOD'
       ? 'STABLE'
       : snapshot.status === 'CAUTION' ? 'PENDING' : snapshot.alert ? 'INTERVENTION' : 'WARNING';
@@ -969,6 +1008,7 @@
         deviceId: 'Meta-RayBan',
         at: Date.now(),
         forwardDeg: snapshot.deviation,
+        signedDeviationDeg: snapshot.signedDeviation,
         headPitchDeg: snapshot.headPitch,
         state: relayState,
         badDurationS: snapshot.badHoldElapsedMs / 1000,
@@ -982,6 +1022,7 @@
         deviceId: 'Meta-RayBan+NU',
         at: Date.now(),
         forwardDeg: snapshot.deviation,
+        signedDeviationDeg: snapshot.signedDeviation,
         headPitchDeg: snapshot.headPitch,
         torsoPitchDeg: snapshot.torsoPitch,
         relativeDeg: snapshot.relative,
@@ -1050,17 +1091,39 @@
     if (now - state.lastUpdateAt < CONFIG.uiIntervalMs) return;
     if (!Number.isFinite(event.beta)) return;
     state.lastUpdateAt = now;
-    window.clearTimeout(state.sensorTimeout);
+    var continuity = window.AntiTurtleEngine.evaluateHeadContinuity(
+      state.lastRawHeadPitch,
+      event.beta,
+      state.lastHeadSampleAt,
+      now,
+      { maxGapMs: CONFIG.headReseatGapMs, maxJumpDeg: CONFIG.headReseatJumpDeg }
+    );
+    state.lastRawHeadPitch = event.beta;
+    state.lastHeadSampleAt = now;
+    if (state.headImuMode) armHeadSensorTimeout();
+    else window.clearTimeout(state.sensorTimeout);
     state.lastHeadPitch = event.beta;
+
+    if (state.headOnlyMode && state.running && !state.headCalibration &&
+        !state.headNeedsCalibration && continuity.status !== 'FRESH') {
+      markHeadReliability(continuity.status === 'GAP' ? 'STALE' : 'FIT_CHECK');
+      return;
+    }
+    if (state.headOnlyMode && state.headNeedsCalibration && !state.headCalibration) {
+      elements.hudLiveLabel.textContent = 'RECALIBRATE';
+      return;
+    }
     if (state.headOnlyMode && state.headCalibration) {
       var calibration = state.headCalibration.add(event.beta, now);
-      elements.hudLiveLabel.textContent = 'CALIBRATING';
-      elements.hudHeadPitch.textContent = '--°';
+      renderHeadCalibration(calibration);
       if (!calibration.ready) return;
       state.lastHeadPitch = calibration.baseline;
       state.headCalibration = null;
+      state.headReliability = 'calibrated';
+      hideHeadCalibration();
       calibrateFromLastSample();
       elements.hudLiveLabel.textContent = 'HEAD CALIBRATED';
+      setHeadImuAction('RECALIBRATE', false, 'recalibrate-head');
       return;
     }
     elements.hudHeadPitch.textContent = formatAngle(event.beta);
@@ -1139,11 +1202,84 @@
     });
   }
 
-  function setHeadImuAction(label, disabled) {
+  function setHeadImuAction(label, disabled, action) {
     if (!elements.headImuAction) return;
     elements.headImuAction.hidden = false;
     elements.headImuAction.disabled = Boolean(disabled);
+    elements.headImuAction.dataset.action = action || 'start-head-imu';
     elements.headImuActionLabel.textContent = label;
+  }
+
+  function hideHeadCalibration() {
+    if (!elements.hudCalibration) return;
+    elements.hudCalibration.hidden = true;
+  }
+
+  function renderHeadCalibration(calibration) {
+    var progress = Math.max(0, Math.min(1, Number(calibration.progress) || 0));
+    var percent = Math.round(progress * 100);
+    var label = calibration.status === 'WARMUP'
+      ? 'WARMING UP'
+      : calibration.status === 'MOVING' ? 'MOVEMENT — RESTART' : 'HOLD STILL';
+    elements.hudCalibration.hidden = false;
+    elements.hudCalibrationLabel.textContent = label;
+    elements.hudCalibrationDetail.textContent = calibration.status === 'MOVING'
+      ? '3.0s'
+      : Math.max(0, (1 - progress) * 3).toFixed(1) + 's';
+    elements.hudCalibrationProgress.setAttribute('aria-valuenow', String(percent));
+    elements.hudCalibrationFill.style.width = percent + '%';
+    elements.hudLiveLabel.textContent = label;
+    elements.hudHeadPitch.textContent = '--°';
+    renderPresentationHud(null, 'CALIBRATING', 0);
+  }
+
+  function beginHeadCalibration(showFeedback) {
+    if (!state.headImuMode || !state.headOnlyMode) return false;
+    state.engine = null;
+    state.running = false;
+    state.summary = null;
+    state.pendingTelemetry = null;
+    state.headNeedsCalibration = false;
+    state.headReliability = 'calibrating';
+    state.headCalibration = window.AntiTurtleEngine.createHeadCalibrator();
+    elements.headImuAction.hidden = true;
+    renderHeadCalibration({ status: 'WARMUP', progress: 0 });
+    if (showFeedback) showToast('정면을 보고 움직이지 않은 채 3초 유지하세요.');
+    return true;
+  }
+
+  function markHeadReliability(status) {
+    if (!state.headOnlyMode || !state.headImuMode) return;
+    var firstReport = state.headReliability !== status.toLowerCase();
+    state.headReliability = status.toLowerCase();
+    state.headNeedsCalibration = true;
+    state.headCalibration = null;
+    state.running = false;
+    state.pendingTelemetry = null;
+    hideHeadCalibration();
+    elements.hudHeadPitch.textContent = '--°';
+    elements.hudLiveLabel.textContent = status === 'STALE' ? 'SENSOR STALE' : 'CHECK FIT';
+    renderPresentationHud(null, status, 0);
+    setHeadImuAction('RECALIBRATE', false, 'recalibrate-head');
+    if (firstReport) {
+      showToast(status === 'STALE'
+        ? '센서가 멈췄습니다. 다시 보정해 주세요.'
+        : '안경 위치가 크게 변했습니다. 다시 보정해 주세요.');
+    }
+  }
+
+  function armHeadSensorTimeout() {
+    window.clearTimeout(state.sensorTimeout);
+    state.sensorTimeout = window.setTimeout(function () {
+      if (!state.headImuMode) return;
+      if (state.lastHeadSampleAt === null) {
+        stopLiveInputs();
+        elements.hudLiveLabel.textContent = 'NO HEAD IMU';
+        setHeadImuAction('RETRY HEAD IMU', false, 'start-head-imu');
+        return;
+      }
+      markHeadReliability('STALE');
+    }, CONFIG.sensorTimeoutMs);
   }
 
   function startHeadImu() {
@@ -1162,9 +1298,11 @@
       state.running = false;
       state.lastHeadPitch = null;
       state.lastUpdateAt = 0;
-      state.headCalibration = state.headOnlyMode
-        ? window.AntiTurtleEngine.createHeadCalibrator()
-        : null;
+      state.lastRawHeadPitch = null;
+      state.lastHeadSampleAt = null;
+      state.headNeedsCalibration = false;
+      state.headReliability = 'starting';
+      state.headCalibration = null;
       if (state.hybridMode) startTorsoPolling();
       elements.headImuAction.hidden = true;
       elements.hudLiveLabel.textContent = state.headOnlyMode
@@ -1172,16 +1310,8 @@
         : hasFreshTorso() ? 'WAIT HEAD' : 'WAIT NU';
       setSource(state.headOnlyMode ? 'glasses' : 'dual', state.headOnlyMode ? 'HEAD IMU' : 'HEAD + NU');
       window.addEventListener('deviceorientation', onDeviceOrientation);
-      window.clearTimeout(state.sensorTimeout);
-      state.sensorTimeout = window.setTimeout(function () {
-        if (!Number.isFinite(state.lastHeadPitch)) {
-          window.removeEventListener('deviceorientation', onDeviceOrientation);
-          state.sensorListening = false;
-          state.headImuMode = false;
-          elements.hudLiveLabel.textContent = 'NO HEAD IMU';
-          setHeadImuAction('RETRY HEAD IMU', false);
-        }
-      }, CONFIG.sensorTimeoutMs);
+      if (state.headOnlyMode) beginHeadCalibration(false);
+      armHeadSensorTimeout();
     }).catch(function () {
       elements.hudLiveLabel.textContent = 'HEAD ERROR';
       setHeadImuAction('RETRY HEAD IMU', false);
@@ -1233,9 +1363,14 @@
     }
     state.headImuMode = false;
     state.headCalibration = null;
+    state.headNeedsCalibration = false;
+    state.lastRawHeadPitch = null;
+    state.lastHeadSampleAt = null;
+    state.headReliability = 'idle';
+    hideHeadCalibration();
     if (stoppedHeadImu && (state.hybridMode || state.headOnlyMode ||
         (state.presentationSource === 'ble' && !state.desktopCameraPreview))) {
-      setHeadImuAction('START HEAD IMU', false);
+      setHeadImuAction('START HEAD IMU', false, 'start-head-imu');
     }
   }
 
@@ -1416,6 +1551,10 @@
     state.mode = null;
     state.lastHeadPitch = null;
     state.headCalibration = null;
+    state.headNeedsCalibration = false;
+    state.lastRawHeadPitch = null;
+    state.lastHeadSampleAt = null;
+    state.headReliability = 'idle';
     state.lastTorsoPitch = 0;
     state.lastTorsoReceivedAt = 0;
     state.lastSnapshot = null;
@@ -1440,7 +1579,8 @@
     elements.torsoPitch.textContent = '--°';
     elements.badHold.textContent = '0.0s';
     elements.thresholdFill.style.width = '0%';
-    renderPresentationHud(0, 'READY', 0);
+    hideHeadCalibration();
+    renderPresentationHud(state.headOnlyMode ? null : 0, 'READY', 0);
     elements.hudLiveLabel.textContent = state.presentationSource === 'ble' || state.presentationSource === 'head'
       ? 'WAIT'
       : state.hybridMode || state.headOnlyMode ? 'WAIT START' : 'LIVE';
@@ -1466,6 +1606,9 @@
     if (action === 'start-camera') startCamera();
     if (action === 'start-hybrid') startHybrid();
     if (action === 'start-head-imu') startHeadImu();
+    if (action === 'recalibrate-head') {
+      if (!beginHeadCalibration(true)) startHeadImu();
+    }
   }
 
   function bindEvents() {
@@ -1478,10 +1621,13 @@
       if (event.target.files && event.target.files[0]) uploadPhoto(event.target.files[0]);
     });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && (state.presentationDemo || state.hybridMode || state.headImuMode)) stopLiveInputs();
-      else if (document.hidden && state.presentationMode) stopTelemetryPolling();
-      else if (document.hidden && state.running && state.currentScreen !== 'sensor-link') stopSession();
-      if (document.hidden && state.cameraMode) stopCamera();
+      if (document.hidden) {
+        if (state.presentationDemo || state.hybridMode || state.headImuMode) stopLiveInputs();
+        else if (state.running && state.currentScreen !== 'sensor-link') stopSession();
+        stopTelemetryPolling();
+        if (state.cameraMode) stopCamera();
+        return;
+      }
       if (!document.hidden && state.presentationDemo) startDemo();
       if (!document.hidden && state.presentationMode &&
           (state.presentationSource === 'ble' ||
@@ -1489,7 +1635,7 @@
       if (!document.hidden && state.cameraMode && !state.hybridMode) startCamera();
       if (!document.hidden && (state.hybridMode || state.headOnlyMode)) {
         elements.cameraGate.hidden = true;
-        setHeadImuAction('START HEAD IMU', false);
+        setHeadImuAction('START HEAD IMU', false, 'start-head-imu');
         window.requestAnimationFrame(function () { elements.headImuAction.focus(); });
       }
       if (!document.hidden && !state.presentationMode && (state.currentScreen === 'monitor' || state.currentScreen === 'sensor-link')) startTelemetryPolling();
@@ -1575,14 +1721,14 @@
       if (state.hybridMode) {
         setSource('dual', 'HYBRID READY');
         elements.cameraGate.hidden = true;
-        setHeadImuAction('START HEAD IMU', false);
+        setHeadImuAction('START HEAD IMU', false, 'start-head-imu');
         window.requestAnimationFrame(function () { elements.headImuAction.focus(); });
         return;
       }
       if (state.headOnlyMode) {
         setSource('glasses', 'HEAD READY');
         elements.cameraGate.hidden = true;
-        setHeadImuAction('START HEAD IMU', false);
+        setHeadImuAction('START HEAD IMU', false, 'start-head-imu');
         window.requestAnimationFrame(function () { elements.headImuAction.focus(); });
         return;
       }
@@ -1595,7 +1741,7 @@
             : state.presentationSource === 'head' ? 'HEAD CAMERA HUD' : 'NU IMU HUD');
         if (state.cameraMode) startCamera();
         if (state.presentationSource === 'ble' && !state.desktopCameraPreview) {
-          setHeadImuAction('START HEAD IMU', false);
+          setHeadImuAction('START HEAD IMU', false, 'start-head-imu');
           window.requestAnimationFrame(function () { elements.headImuAction.focus(); });
         }
       }, 350);

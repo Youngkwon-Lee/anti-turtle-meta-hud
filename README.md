@@ -11,7 +11,7 @@ The glasses use device orientation as a **personal head-tilt baseline**. A relay
 ## What is included
 
 - 600×600 Meta Display HUD with anatomical Lottie posture animation
-- warm-up and median calibration for head orientation
+- warm-up and continuous three-second stable calibration using a median head-orientation baseline
 - HEAD-only and HEAD + torso HYBRID relay modes
 - live Mac/desktop camera HUD
 - session-isolated, ordered telemetry with Redis support
@@ -67,7 +67,7 @@ https://YOUR_DEPLOYMENT.example/?headonly=1&session=team_demo
 https://YOUR_DEPLOYMENT.example/?camera=1&source=head&session=team_demo
 ```
 
-On the glasses, choose **START HEAD IMU** and hold a comfortable neutral posture during calibration. The receiver accepts fresh `HEAD/head-relay` packets and becomes stale after the sender stops.
+On the glasses, choose **START HEAD IMU** and hold a comfortable neutral posture without moving for three seconds. Calibration restarts when motion is detected, keeps the result unavailable as `--°` until it succeeds, and requires recalibration after a sensor gap or a large fit-changing orientation jump. The receiver accepts fresh `HEAD/head-relay` packets and becomes stale after the sender stops.
 
 The outward-facing glasses camera is not exposed as a normal web camera. The camera receiver URL uses the Mac or phone camera where that page is open.
 
@@ -98,7 +98,7 @@ For HEAD + torso experiments:
 
 ## Deployment
 
-The repository is Vercel-compatible. Shared relay operation requires one Redis REST-compatible environment-variable pair:
+The repository is Vercel-compatible. Git-triggered deployments are disabled in `vercel.json`; release deployments must be built locally and uploaded with `vercel deploy --prebuilt`. Shared relay operation requires one Redis REST-compatible environment-variable pair:
 
 ```text
 UPSTASH_REDIS_REST_URL
@@ -126,7 +126,7 @@ Head orientation is not CVA. An IMU in glasses cannot locate the tragus or C7 an
 
 This is an experimental prototype. Device support, browser sensor permissions, and Meta Display Web App behavior may change. Test on the intended glasses and operating system before relying on a release.
 
-The current milestone is the public [`v0.1.0`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), [open-source review](docs/OPEN_SOURCE_REVIEW.md), and [Meta Ray-Ban Display ecosystem map](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md) before extending the measurement or device scope.
+The current milestone is the public [`v0.1.1`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.1) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), [open-source review](docs/OPEN_SOURCE_REVIEW.md), and [Meta Ray-Ban Display ecosystem map](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md) before extending the measurement or device scope.
 
 ## Contributing and license
 

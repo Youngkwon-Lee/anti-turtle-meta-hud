@@ -7,7 +7,7 @@ var test = require('node:test');
 
 var publicRoot = path.join(__dirname, '..', 'public');
 
-test('anatomical Lottie asset references both posture endpoint images', function () {
+test('anatomical Lottie asset references extension, neutral, and flexion endpoints', function () {
   var animation = JSON.parse(fs.readFileSync(
     path.join(publicRoot, 'assets', 'posture-anatomy.lottie.json'),
     'utf8'
@@ -17,9 +17,10 @@ test('anatomical Lottie asset references both posture endpoint images', function
   assert.deepEqual(assetNames, [
     'posture-anatomy-neutral.webp',
     'posture-anatomy-forward.webp',
+    'posture-anatomy-extension.webp',
   ]);
   assert.equal(animation.fr, 30);
-  assert.equal(animation.op, 61);
+  assert.equal(animation.op, 121);
   assetNames.forEach(function (assetName) {
     assert.equal(fs.existsSync(path.join(publicRoot, 'assets', assetName)), true);
   });

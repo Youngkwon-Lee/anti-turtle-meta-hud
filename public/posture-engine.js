@@ -36,6 +36,24 @@
     return Math.round(Math.min(maximum, value) / maximum * (frames - 1));
   }
 
+  function signedPostureAnimationFrame(signedDeviation, totalFrames, maxDeviation) {
+    var value = finiteNumber(signedDeviation, 'signedDeviation');
+    var frames = Math.max(1, Math.round(finiteNumber(totalFrames, 'totalFrames')));
+    var maximum = maxDeviation === undefined
+      ? 25
+      : Math.max(1, finiteNumber(maxDeviation, 'maxDeviation'));
+    var midpoint = (frames - 1) / 2;
+    var bounded = Math.max(-maximum, Math.min(maximum, value));
+    return Math.round(midpoint + (bounded / maximum) * midpoint);
+  }
+
+  // Meta Display glasses report beta increasing during backward extension.
+  // The HUD visual axis uses forward flexion as positive, so invert only the
+  // presentation direction while preserving the raw and calibrated values.
+  function postureVisualDeviation(signedDeviation) {
+    return -finiteNumber(signedDeviation, 'signedDeviation');
+  }
+
   function median(values) {
     var sorted = values.slice().sort(function (left, right) { return left - right; });
     var middle = Math.floor(sorted.length / 2);
@@ -47,11 +65,45 @@
   function createHeadCalibrator(overrides) {
     var options = Object.assign({
       warmupMs: 300,
-      sampleMs: 700,
-      minSamples: 6,
+      sampleMs: 3000,
+      // DeviceOrientation is commonly delivered at about 5 Hz on the glasses.
+      // Ten samples still rejects sparse/noisy holds while allowing the
+      // three-second continuous window to complete at that delivery rate.
+      minSamples: 10,
+      maxRangeDeg: 2.5,
+      maxStepDeg: 1.2,
+      maxGapMs: 2000,
     }, overrides || {});
     var startedAt = null;
+    var stableStartedAt = null;
     var samples = [];
+    var lastPitch = null;
+    var lastAt = null;
+
+    function result(status, elapsedMs, ready) {
+      var stableElapsedMs = stableStartedAt === null
+        ? 0
+        : Math.max(0, elapsedMs - (stableStartedAt - startedAt));
+      var timeProgress = options.sampleMs > 0
+        ? Math.min(1, stableElapsedMs / options.sampleMs)
+        : 1;
+      var sampleProgress = options.minSamples > 0
+        ? Math.min(1, samples.length / options.minSamples)
+        : 1;
+      var rangeDeg = samples.length
+        ? Math.max.apply(null, samples) - Math.min.apply(null, samples)
+        : 0;
+      return {
+        ready: ready,
+        status: status,
+        baseline: ready ? median(samples) : null,
+        sampleCount: samples.length,
+        elapsedMs: elapsedMs,
+        stableElapsedMs: stableElapsedMs,
+        progress: Math.min(timeProgress, sampleProgress),
+        rangeDeg: rangeDeg,
+      };
+    }
 
     return {
       add: function (value, at) {
@@ -59,16 +111,60 @@
         var timestamp = at === undefined ? Date.now() : finiteNumber(at, 'at');
         if (startedAt === null) startedAt = timestamp;
         var elapsedMs = Math.max(0, timestamp - startedAt);
-        if (elapsedMs >= options.warmupMs) samples.push(pitch);
-        var ready = elapsedMs >= options.warmupMs + options.sampleMs &&
-          samples.length >= options.minSamples;
-        return {
-          ready: ready,
-          baseline: ready ? median(samples) : null,
-          sampleCount: samples.length,
-          elapsedMs: elapsedMs,
-        };
+        if (elapsedMs < options.warmupMs) {
+          lastPitch = pitch;
+          lastAt = timestamp;
+          return result('WARMUP', elapsedMs, false);
+        }
+
+        if (stableStartedAt === null) {
+          stableStartedAt = timestamp;
+          samples = [pitch];
+          lastPitch = pitch;
+          lastAt = timestamp;
+          return result('HOLD_STILL', elapsedMs, false);
+        }
+
+        var gapMs = lastAt === null ? 0 : Math.max(0, timestamp - lastAt);
+        var movedByStep = lastPitch !== null && Math.abs(pitch - lastPitch) > options.maxStepDeg;
+        var candidateSamples = samples.concat([pitch]);
+        var candidateRange = Math.max.apply(null, candidateSamples) - Math.min.apply(null, candidateSamples);
+        if (gapMs > options.maxGapMs || movedByStep || candidateRange > options.maxRangeDeg) {
+          stableStartedAt = timestamp;
+          samples = [pitch];
+          lastPitch = pitch;
+          lastAt = timestamp;
+          return result('MOVING', elapsedMs, false);
+        }
+
+        samples.push(pitch);
+        lastPitch = pitch;
+        lastAt = timestamp;
+        var stableElapsedMs = timestamp - stableStartedAt;
+        var ready = stableElapsedMs >= options.sampleMs && samples.length >= options.minSamples;
+        return result(ready ? 'READY' : 'HOLD_STILL', elapsedMs, ready);
       },
+    };
+  }
+
+  function evaluateHeadContinuity(previousPitch, pitch, previousAt, at, overrides) {
+    var options = Object.assign({
+      maxGapMs: 2000,
+      maxJumpDeg: 45,
+    }, overrides || {});
+    var currentPitch = finiteNumber(pitch, 'headPitch');
+    var currentAt = finiteNumber(at, 'at');
+    if (previousPitch === null || previousPitch === undefined ||
+        previousAt === null || previousAt === undefined ||
+        !Number.isFinite(Number(previousPitch)) || !Number.isFinite(Number(previousAt))) {
+      return { status: 'FRESH', gapMs: 0, jumpDeg: 0 };
+    }
+    var gapMs = Math.max(0, currentAt - Number(previousAt));
+    var jumpDeg = Math.abs(currentPitch - Number(previousPitch));
+    return {
+      status: gapMs > options.maxGapMs ? 'GAP' : jumpDeg > options.maxJumpDeg ? 'JUMP' : 'FRESH',
+      gapMs: gapMs,
+      jumpDeg: jumpDeg,
     };
   }
 
@@ -102,6 +198,7 @@
         headPitch: headPitch,
         torsoPitch: torsoPitch,
         relative: relative,
+        signedDeviation: 0,
         deviation: 0,
         status: 'GOOD',
         badSince: null,
@@ -123,7 +220,8 @@
       addElapsed(at);
 
       var relative = headPitch - torsoPitch;
-      var deviation = Math.abs(relative - session.baselineRelative);
+      var signedDeviation = relative - session.baselineRelative;
+      var deviation = Math.abs(signedDeviation);
       var nextStatus = classifyDeviation(deviation, options);
       var alert = false;
 
@@ -145,6 +243,7 @@
       session.headPitch = headPitch;
       session.torsoPitch = torsoPitch;
       session.relative = relative;
+      session.signedDeviation = signedDeviation;
       session.deviation = deviation;
       session.status = nextStatus;
       session.samples += 1;
@@ -165,6 +264,7 @@
         headPitch: session.headPitch,
         torsoPitch: session.torsoPitch,
         relative: session.relative,
+        signedDeviation: session.signedDeviation,
         deviation: session.deviation,
         status: session.status,
         badHoldElapsedMs: badHoldElapsedMs,
@@ -200,6 +300,9 @@
     classifyDeviation: classifyDeviation,
     createHeadCalibrator: createHeadCalibrator,
     createPostureEngine: createPostureEngine,
+    evaluateHeadContinuity: evaluateHeadContinuity,
     postureAnimationFrame: postureAnimationFrame,
+    postureVisualDeviation: postureVisualDeviation,
+    signedPostureAnimationFrame: signedPostureAnimationFrame,
   };
 });
