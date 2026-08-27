@@ -329,7 +329,7 @@
   var UART_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
   var UART_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-  function renderPresentationHud(deviation, displayStatus, holdSeconds) {
+  function renderPresentationHud(deviation, displayStatus, holdSeconds, signedDeviation) {
     if (!elements.presentationHud) return;
     var value = deviation === null || deviation === undefined ? NaN : Number(deviation);
     var hold = Number(holdSeconds);
@@ -362,12 +362,16 @@
       : (state.hybridMode || state.presentationSource === 'ble') && !hasFreshTorso()
       ? '--°'
       : formatAngle(state.lastTorsoPitch);
-    var leanValue = Number.isFinite(value) ? value : 0;
+    var signedValue = Number(signedDeviation);
+    if (!Number.isFinite(signedValue)) signedValue = Number.isFinite(value) ? value : 0;
+    var leanValue = signedValue;
     elements.hudPostureFigure.style.setProperty('--hud-lean', Math.min(15, Math.max(0, leanValue * 0.72)) + 'deg');
+    var extensionDeg = Math.max(-15, Math.min(0, leanValue * 0.72));
+    elements.hudAnatomyAvatar.style.setProperty('--hud-extension', extensionDeg + 'deg');
     if (state.postureAnimationReady && state.postureAnimation && Number.isFinite(value)) {
       state.postureAnimation.goToAndStop(
         window.AntiTurtleEngine.postureAnimationFrame(
-          value,
+          Math.max(0, signedValue),
           state.postureAnimation.totalFrames || 61
         ),
         true
@@ -384,7 +388,7 @@
         renderer: 'svg',
         loop: false,
         autoplay: false,
-        path: 'assets/posture-anatomy.lottie.json?v=20260822-anatomy-avatar-2',
+        path: 'assets/posture-anatomy.lottie.json?v=20260827-bidirectional-avatar-1',
         rendererSettings: {
           preserveAspectRatio: 'xMidYMid meet',
           progressiveLoad: false,
@@ -400,9 +404,12 @@
       var deviation = state.externalTelemetry
         ? Number(state.externalTelemetry.forwardDeg)
         : state.lastSnapshot ? Number(state.lastSnapshot.deviation) : 0;
+      var signedDeviation = state.externalTelemetry
+        ? Number(state.externalTelemetry.signedDeviationDeg)
+        : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : deviation;
       state.postureAnimation.goToAndStop(
         window.AntiTurtleEngine.postureAnimationFrame(
-          Number.isFinite(deviation) ? deviation : 0,
+          Number.isFinite(signedDeviation) ? Math.max(0, signedDeviation) : 0,
           state.postureAnimation.totalFrames || 61
         ),
         true
@@ -965,7 +972,13 @@
     }
     elements.badHold.textContent = badDurationS.toFixed(1) + 's';
     elements.thresholdFill.style.width = Math.min(100, Math.max(0, (forwardDeg / 20) * 100)) + '%';
-    renderPresentationHud(forwardDeg, displayStatus, badDurationS);
+    var signedDeviation = Number(message.signedDeviationDeg);
+    renderPresentationHud(
+      forwardDeg,
+      displayStatus,
+      badDurationS,
+      Number.isFinite(signedDeviation) ? signedDeviation : forwardDeg
+    );
     return true;
   }
 
@@ -980,7 +993,12 @@
     elements.torsoPitch.textContent = formatAngle(snapshot.torsoPitch);
     elements.badHold.textContent = (snapshot.badHoldElapsedMs / 1000).toFixed(1) + 's';
     elements.thresholdFill.style.width = Math.min(100, (snapshot.deviation / 20) * 100) + '%';
-    renderPresentationHud(snapshot.deviation, snapshot.status, snapshot.badHoldElapsedMs / 1000);
+    renderPresentationHud(
+      snapshot.deviation,
+      snapshot.status,
+      snapshot.badHoldElapsedMs / 1000,
+      snapshot.signedDeviation
+    );
     var relayState = snapshot.status === 'GOOD'
       ? 'STABLE'
       : snapshot.status === 'CAUTION' ? 'PENDING' : snapshot.alert ? 'INTERVENTION' : 'WARNING';
@@ -989,6 +1007,7 @@
         deviceId: 'Meta-RayBan',
         at: Date.now(),
         forwardDeg: snapshot.deviation,
+        signedDeviationDeg: snapshot.signedDeviation,
         headPitchDeg: snapshot.headPitch,
         state: relayState,
         badDurationS: snapshot.badHoldElapsedMs / 1000,
@@ -1002,6 +1021,7 @@
         deviceId: 'Meta-RayBan+NU',
         at: Date.now(),
         forwardDeg: snapshot.deviation,
+        signedDeviationDeg: snapshot.signedDeviation,
         headPitchDeg: snapshot.headPitch,
         torsoPitchDeg: snapshot.torsoPitch,
         relativeDeg: snapshot.relative,

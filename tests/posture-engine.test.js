@@ -24,7 +24,22 @@ test('calibration removes the initial head-to-torso offset', function () {
 
   assert.equal(calibrated.baselineRelative, 14);
   assert.equal(samePosture.deviation, 0);
+  assert.equal(samePosture.signedDeviation, 0);
   assert.equal(samePosture.status, 'GOOD');
+});
+
+test('preserves flexion and extension direction while classifying absolute deviation', function () {
+  var engine = posture.createPostureEngine();
+  engine.calibrate({ headPitch: 60, torsoPitch: 0, at: 0 });
+
+  var flexion = engine.update({ headPitch: 72, torsoPitch: 0, at: 100 });
+  var extension = engine.update({ headPitch: 50, torsoPitch: 0, at: 200 });
+
+  assert.equal(flexion.signedDeviation, 12);
+  assert.equal(flexion.deviation, 12);
+  assert.equal(extension.signedDeviation, -10);
+  assert.equal(extension.deviation, 10);
+  assert.equal(extension.status, 'CAUTION');
 });
 
 test('head calibration ignores startup transients and uses a stable median', function () {

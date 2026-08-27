@@ -180,6 +180,7 @@
         headPitch: headPitch,
         torsoPitch: torsoPitch,
         relative: relative,
+        signedDeviation: 0,
         deviation: 0,
         status: 'GOOD',
         badSince: null,
@@ -201,7 +202,8 @@
       addElapsed(at);
 
       var relative = headPitch - torsoPitch;
-      var deviation = Math.abs(relative - session.baselineRelative);
+      var signedDeviation = relative - session.baselineRelative;
+      var deviation = Math.abs(signedDeviation);
       var nextStatus = classifyDeviation(deviation, options);
       var alert = false;
 
@@ -223,6 +225,7 @@
       session.headPitch = headPitch;
       session.torsoPitch = torsoPitch;
       session.relative = relative;
+      session.signedDeviation = signedDeviation;
       session.deviation = deviation;
       session.status = nextStatus;
       session.samples += 1;
@@ -243,6 +246,7 @@
         headPitch: session.headPitch,
         torsoPitch: session.torsoPitch,
         relative: session.relative,
+        signedDeviation: session.signedDeviation,
         deviation: session.deviation,
         status: session.status,
         badHoldElapsedMs: badHoldElapsedMs,

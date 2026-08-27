@@ -893,7 +893,8 @@ body.presentation-mode .toast {
   filter: drop-shadow(0 0 5px rgba(99, 225, 224, 0.34));
 }
 
-.hud-anatomy-avatar {
+.hud-anatomy-avatar,
+.hud-anatomy-baseline {
   position: absolute;
   z-index: 2;
   top: 180px;
@@ -907,6 +908,18 @@ body.presentation-mode .toast {
   transition: opacity 180ms ease;
 }
 
+.hud-anatomy-avatar {
+  --hud-extension: 0deg;
+  transform: rotate(var(--hud-extension));
+  transform-origin: 48% 72%;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.hud-anatomy-baseline {
+  object-fit: contain;
+  opacity: 0;
+}
+
 .hud-anatomy-avatar canvas,
 .hud-anatomy-avatar svg {
   display: block;
@@ -916,6 +929,10 @@ body.presentation-mode .toast {
 
 body.lottie-avatar-ready .hud-anatomy-avatar {
   opacity: 0.94;
+}
+
+body.lottie-avatar-ready .hud-anatomy-baseline {
+  opacity: 0.2;
 }
 
 body.lottie-avatar-ready .hud-posture-figure {

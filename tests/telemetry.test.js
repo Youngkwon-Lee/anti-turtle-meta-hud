@@ -73,6 +73,7 @@ test('rejects incomplete hybrid telemetry packets', function () {
 test('normalizes head-only relay telemetry', function () {
   var telemetry = normalizeTelemetry({
     forwardDeg: 9.5,
+    signedDeviationDeg: -9.5,
     headPitchDeg: 28.2,
     state: 'pending',
     sensorMode: 'head',
@@ -81,6 +82,7 @@ test('normalizes head-only relay telemetry', function () {
   assert.equal(telemetry.sensorMode, 'HEAD');
   assert.equal(telemetry.transport, 'head-relay');
   assert.equal(telemetry.forwardDeg, 9.5);
+  assert.equal(telemetry.signedDeviationDeg, -9.5);
   assert.equal(telemetry.headPitchDeg, 28.2);
   assert.equal(telemetry.torsoPitchDeg, undefined);
   assert.equal(telemetry.sessionId, 'head-demo');
@@ -149,6 +151,7 @@ test('telemetry relay preserves head-only fields on readback', async function ()
   var uploadResponse = createResponse();
   await handler(createRequest('POST', {
     forwardDeg: 16,
+    signedDeviationDeg: -16,
     headPitchDeg: 37,
     state: 'WARNING',
     sensorMode: 'HEAD',
@@ -162,6 +165,7 @@ test('telemetry relay preserves head-only fields on readback', async function ()
   assert.equal(payload.telemetry.sensorMode, 'HEAD');
   assert.equal(payload.telemetry.transport, 'head-relay');
   assert.equal(payload.telemetry.headPitchDeg, 37);
+  assert.equal(payload.telemetry.signedDeviationDeg, -16);
   assert.equal(payload.telemetry.torsoPitchDeg, undefined);
 });
 

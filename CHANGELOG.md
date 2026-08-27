@@ -13,10 +13,12 @@ All notable changes to this project are documented in this file. The format foll
 - Kept the HEAD value unavailable as `--°` until calibration succeeds.
 - Added visible calibration progress, movement rejection, and an explicit recalibration action.
 - Required recalibration after a sensor gap or a large orientation jump that may indicate the glasses were removed or reseated.
+- Preserved the sign of calibrated head-pitch deviation so the anatomical avatar distinguishes forward flexion from backward extension.
 
 ### Added
 
 - Replay fixtures and tests for startup transients, movement rejection, stable calibration, and sensor continuity failures.
+- Optional signed-deviation telemetry for matching bidirectional animation on the Mac receiver.
 - A release guard that disables Git-triggered Vercel deployments so reviewed prebuilt artifacts can be deployed without a Vercel-managed source build.
 
 ## [0.1.0] - 2026-08-24
