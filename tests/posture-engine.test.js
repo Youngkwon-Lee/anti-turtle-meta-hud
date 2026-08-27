@@ -28,18 +28,23 @@ test('calibration removes the initial head-to-torso offset', function () {
   assert.equal(samePosture.status, 'GOOD');
 });
 
-test('preserves flexion and extension direction while classifying absolute deviation', function () {
+test('preserves positive and negative direction while classifying absolute deviation', function () {
   var engine = posture.createPostureEngine();
   engine.calibrate({ headPitch: 60, torsoPitch: 0, at: 0 });
 
-  var flexion = engine.update({ headPitch: 72, torsoPitch: 0, at: 100 });
-  var extension = engine.update({ headPitch: 50, torsoPitch: 0, at: 200 });
+  var positive = engine.update({ headPitch: 72, torsoPitch: 0, at: 100 });
+  var negative = engine.update({ headPitch: 50, torsoPitch: 0, at: 200 });
 
-  assert.equal(flexion.signedDeviation, 12);
-  assert.equal(flexion.deviation, 12);
-  assert.equal(extension.signedDeviation, -10);
-  assert.equal(extension.deviation, 10);
-  assert.equal(extension.status, 'CAUTION');
+  assert.equal(positive.signedDeviation, 12);
+  assert.equal(positive.deviation, 12);
+  assert.equal(negative.signedDeviation, -10);
+  assert.equal(negative.deviation, 10);
+  assert.equal(negative.status, 'CAUTION');
+});
+
+test('maps Meta Display beta extension to backward HUD motion', function () {
+  assert.equal(posture.postureVisualDeviation(12), -12);
+  assert.equal(posture.postureVisualDeviation(-10), 10);
 });
 
 test('head calibration ignores startup transients and uses a stable median', function () {

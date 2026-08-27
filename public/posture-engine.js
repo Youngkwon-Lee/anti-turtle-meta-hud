@@ -36,6 +36,13 @@
     return Math.round(Math.min(maximum, value) / maximum * (frames - 1));
   }
 
+  // Meta Display glasses report beta increasing during backward extension.
+  // The HUD visual axis uses forward flexion as positive, so invert only the
+  // presentation direction while preserving the raw and calibrated values.
+  function postureVisualDeviation(signedDeviation) {
+    return -finiteNumber(signedDeviation, 'signedDeviation');
+  }
+
   function median(values) {
     var sorted = values.slice().sort(function (left, right) { return left - right; });
     var middle = Math.floor(sorted.length / 2);
@@ -284,5 +291,6 @@
     createPostureEngine: createPostureEngine,
     evaluateHeadContinuity: evaluateHeadContinuity,
     postureAnimationFrame: postureAnimationFrame,
+    postureVisualDeviation: postureVisualDeviation,
   };
 });

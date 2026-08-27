@@ -364,14 +364,14 @@
       : formatAngle(state.lastTorsoPitch);
     var signedValue = Number(signedDeviation);
     if (!Number.isFinite(signedValue)) signedValue = Number.isFinite(value) ? value : 0;
-    var leanValue = signedValue;
+    var leanValue = window.AntiTurtleEngine.postureVisualDeviation(signedValue);
     elements.hudPostureFigure.style.setProperty('--hud-lean', Math.min(15, Math.max(0, leanValue * 0.72)) + 'deg');
     var extensionDeg = Math.max(-15, Math.min(0, leanValue * 0.72));
     elements.hudAnatomyAvatar.style.setProperty('--hud-extension', extensionDeg + 'deg');
     if (state.postureAnimationReady && state.postureAnimation && Number.isFinite(value)) {
       state.postureAnimation.goToAndStop(
         window.AntiTurtleEngine.postureAnimationFrame(
-          Math.max(0, signedValue),
+          Math.max(0, leanValue),
           state.postureAnimation.totalFrames || 61
         ),
         true
@@ -407,9 +407,12 @@
       var signedDeviation = state.externalTelemetry
         ? Number(state.externalTelemetry.signedDeviationDeg)
         : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : deviation;
+      var visualDeviation = window.AntiTurtleEngine.postureVisualDeviation(
+        Number.isFinite(signedDeviation) ? signedDeviation : 0
+      );
       state.postureAnimation.goToAndStop(
         window.AntiTurtleEngine.postureAnimationFrame(
-          Number.isFinite(signedDeviation) ? Math.max(0, signedDeviation) : 0,
+          Math.max(0, visualDeviation),
           state.postureAnimation.totalFrames || 61
         ),
         true

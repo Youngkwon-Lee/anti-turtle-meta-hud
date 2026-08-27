@@ -13,7 +13,7 @@ All notable changes to this project are documented in this file. The format foll
 - Kept the HEAD value unavailable as `--°` until calibration succeeds.
 - Added visible calibration progress, movement rejection, and an explicit recalibration action.
 - Required recalibration after a sensor gap or a large orientation jump that may indicate the glasses were removed or reseated.
-- Preserved the sign of calibrated head-pitch deviation so the anatomical avatar distinguishes forward flexion from backward extension.
+- Preserved calibrated head-pitch direction and mapped the Meta Display beta convention so backward extension animates backward instead of flexing forward.
 
 ### Added
 
