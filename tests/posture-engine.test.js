@@ -81,6 +81,27 @@ test('head calibration rejects movement and restarts the hold window', function 
   assert.ok(Math.abs(results[results.length - 1].baseline - 66.2) < 0.01);
 });
 
+test('head calibration rejects a sensor gap and restarts the continuous hold', function () {
+  var calibrator = posture.createHeadCalibrator({
+    warmupMs: 0,
+    sampleMs: 3000,
+    minSamples: 4,
+    maxGapMs: 2000,
+  });
+
+  calibrator.add(62, 0);
+  calibrator.add(62, 100);
+  calibrator.add(62, 200);
+  var afterGap = calibrator.add(62, 2501);
+
+  assert.equal(afterGap.ready, false);
+  assert.equal(afterGap.status, 'MOVING');
+  assert.equal(afterGap.sampleCount, 1);
+  assert.equal(calibrator.add(62, 3000).ready, false);
+  assert.equal(calibrator.add(62, 4000).ready, false);
+  assert.equal(calibrator.add(62, 5501).ready, true);
+});
+
 test('head continuity flags sensor gaps and large jumps', function () {
   assert.equal(posture.evaluateHeadContinuity(null, 62, null, 100).status, 'FRESH');
   assert.equal(posture.evaluateHeadContinuity(62, 63, 100, 200).status, 'FRESH');

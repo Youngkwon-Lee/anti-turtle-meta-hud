@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-27
+
+### Changed
+
+- Replaced instant head calibration with a warm-up and continuous three-second stable hold using a median baseline.
+- Kept the HEAD value unavailable as `--°` until calibration succeeds.
+- Added visible calibration progress, movement rejection, and an explicit recalibration action.
+- Required recalibration after a sensor gap or a large orientation jump that may indicate the glasses were removed or reseated.
+
+### Added
+
+- Replay fixtures and tests for startup transients, movement rejection, stable calibration, and sensor continuity failures.
+- A release guard that disables Git-triggered Vercel deployments so reviewed prebuilt artifacts can be deployed without a Vercel-managed source build.
+
 ## [0.1.0] - 2026-08-24
 
 ### Added
@@ -17,5 +31,6 @@ All notable changes to this project are documented in this file. The format foll
 - Public roadmap, release checklist, and open-source reuse review.
 - Structured bug, device compatibility, and pull-request templates.
 
-[Unreleased]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0

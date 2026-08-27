@@ -10,7 +10,7 @@
     torsoStaleMs: 2000,
     telemetryPollMs: 900,
     presentationTelemetryPollMs: 100,
-    telemetryPostMs: 100,
+    telemetryPostMs: 200,
     telemetryStaleMs: 1500,
     uiIntervalMs: 50,
     demoIntervalMs: 100,
@@ -1252,11 +1252,7 @@
     state.sensorTimeout = window.setTimeout(function () {
       if (!state.headImuMode) return;
       if (state.lastHeadSampleAt === null) {
-        window.removeEventListener('deviceorientation', onDeviceOrientation);
-        state.sensorListening = false;
-        state.headImuMode = false;
-        state.headCalibration = null;
-        hideHeadCalibration();
+        stopLiveInputs();
         elements.hudLiveLabel.textContent = 'NO HEAD IMU';
         setHeadImuAction('RETRY HEAD IMU', false, 'start-head-imu');
         return;
@@ -1604,10 +1600,13 @@
       if (event.target.files && event.target.files[0]) uploadPhoto(event.target.files[0]);
     });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && (state.presentationDemo || state.hybridMode || state.headImuMode)) stopLiveInputs();
-      else if (document.hidden && state.presentationMode) stopTelemetryPolling();
-      else if (document.hidden && state.running && state.currentScreen !== 'sensor-link') stopSession();
-      if (document.hidden && state.cameraMode) stopCamera();
+      if (document.hidden) {
+        if (state.presentationDemo || state.hybridMode || state.headImuMode) stopLiveInputs();
+        else if (state.running && state.currentScreen !== 'sensor-link') stopSession();
+        stopTelemetryPolling();
+        if (state.cameraMode) stopCamera();
+        return;
+      }
       if (!document.hidden && state.presentationDemo) startDemo();
       if (!document.hidden && state.presentationMode &&
           (state.presentationSource === 'ble' ||

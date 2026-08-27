@@ -51,11 +51,13 @@
       minSamples: 30,
       maxRangeDeg: 2.5,
       maxStepDeg: 1.2,
+      maxGapMs: 2000,
     }, overrides || {});
     var startedAt = null;
     var stableStartedAt = null;
     var samples = [];
     var lastPitch = null;
+    var lastAt = null;
 
     function result(status, elapsedMs, ready) {
       var stableElapsedMs = stableStartedAt === null
@@ -90,6 +92,7 @@
         var elapsedMs = Math.max(0, timestamp - startedAt);
         if (elapsedMs < options.warmupMs) {
           lastPitch = pitch;
+          lastAt = timestamp;
           return result('WARMUP', elapsedMs, false);
         }
 
@@ -97,21 +100,25 @@
           stableStartedAt = timestamp;
           samples = [pitch];
           lastPitch = pitch;
+          lastAt = timestamp;
           return result('HOLD_STILL', elapsedMs, false);
         }
 
+        var gapMs = lastAt === null ? 0 : Math.max(0, timestamp - lastAt);
         var movedByStep = lastPitch !== null && Math.abs(pitch - lastPitch) > options.maxStepDeg;
         var candidateSamples = samples.concat([pitch]);
         var candidateRange = Math.max.apply(null, candidateSamples) - Math.min.apply(null, candidateSamples);
-        if (movedByStep || candidateRange > options.maxRangeDeg) {
+        if (gapMs > options.maxGapMs || movedByStep || candidateRange > options.maxRangeDeg) {
           stableStartedAt = timestamp;
           samples = [pitch];
           lastPitch = pitch;
+          lastAt = timestamp;
           return result('MOVING', elapsedMs, false);
         }
 
         samples.push(pitch);
         lastPitch = pitch;
+        lastAt = timestamp;
         var stableElapsedMs = timestamp - stableStartedAt;
         var ready = stableElapsedMs >= options.sampleMs && samples.length >= options.minSamples;
         return result(ready ? 'READY' : 'HOLD_STILL', elapsedMs, ready);
