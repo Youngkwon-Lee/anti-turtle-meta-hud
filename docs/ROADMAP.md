@@ -31,11 +31,24 @@ Goal: evaluate a separate side-view measurement workflow. Do not replace the cur
 
 - use a standardized sagittal camera setup;
 - locate or manually confirm tragus and C7 landmarks;
+- synchronize the glasses IMU, an independent upper-torso IMU, and camera frames before evaluating sensor fusion;
+- evaluate ear/tragus, shoulder/acromion, head-pose, and manually confirmed or validated C7-related landmarks without treating a generic shoulder keypoint as C7;
 - reject frames with inadequate confidence, visibility, or camera geometry;
 - compare candidate landmark/head-pose methods against annotated reference measurements;
 - report repeatability, failure rate, latency, MAE, ICC, SEM/MDC, and Bland–Altman agreement, including subgroup and failure-case analysis.
 
 Exit criteria must be chosen after a pilot study. No clinical claim is permitted from a software demo or a single algorithm accuracy number.
+
+## Exercise coaching research — later
+
+Goal: evaluate optional guided movement modules separately from measurement and diagnosis.
+
+- prototype clinician-reviewed McKenzie-style cervical-extension instructions and feedback;
+- define stop instructions, symptom screening, contraindication messaging, dosage limits, and escalation guidance before participant testing;
+- keep exercise completion and user-reported response separate from CVA/FHP estimation;
+- compare the module with an appropriate control under a predefined protocol rather than claiming efficacy from engagement or posture telemetry alone.
+
+No exercise should be automatically prescribed from the prototype angle. Clinical intervention studies require qualified collaborators, consent and ethics review where applicable, and appropriate outcome measures.
 
 ## Device portability — later
 

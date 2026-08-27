@@ -89,6 +89,16 @@ The default policy polls every 500 ms, ignores stale telemetry, alerts after thr
 
 For a persistent native status, install `macos/AntiTurtleMenu.swift` with `zsh macos/install_menu_bar.sh`. The menu bar shows a colored live angle, exposes connection details, opens the matching HUD, and can enable or disable the same posture notifications. Full Xcode is not required; macOS Command Line Tools are sufficient.
 
+```bash
+zsh macos/install_menu_bar.sh
+open "$HOME/Applications/Anti Turtle Menu.app" --args \
+  --base-url https://stage-codex-bridge-head-only.vercel.app \
+  --session head-demo \
+  --mode HEAD
+```
+
+See [macos/README.md](macos/README.md) for custom sessions, HYBRID mode, dry-run notifications, and troubleshooting.
+
 ## Hybrid mode
 
 For HEAD + torso experiments:
@@ -97,6 +107,18 @@ For HEAD + torso experiments:
 2. open `/?hybrid=1&session=team_demo` on the glasses;
 3. open `/?camera=1&source=ble&session=team_demo` on the Mac;
 4. use `--mode HYBRID` for the optional Mac notifier.
+
+## Planned research directions
+
+The next measurement work is intentionally separate from the current head-tilt coaching value:
+
+- add an independent upper-torso IMU and fuse it with the glasses IMU to distinguish head motion from torso tilt;
+- add a standardized side-view pose-estimation workflow using ear/tragus, shoulder/acromion, and manually confirmed or validated C7-related landmarks;
+- combine sensor continuity, calibration quality, camera geometry, landmark confidence, and visibility into one confidence gate that abstains instead of reporting an unreliable value;
+- compare candidate CVA and forward-head-posture estimates with annotated reference measurements and report measurement error, repeatability, agreement, latency, and failure cases;
+- prototype clinician-reviewed McKenzie-style cervical-extension coaching as an optional exercise module with stop instructions and contraindication messaging, not as automated treatment or a medical prescription.
+
+Shoulder and face keypoints may improve a multimodal posture estimate, but general pose models do not directly identify C7 and cannot establish clinical CVA accuracy without a standardized protocol and validation. Photographic CVA research commonly uses the tragus and C7 landmarks; see this [validation study](https://pubmed.ncbi.nlm.nih.gov/32911612/). McKenzie-style exercise evidence is treated as an intervention research input rather than a product efficacy claim; see this [small comparative study](https://pubmed.ncbi.nlm.nih.gov/30154609/). The detailed gates are maintained in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/CLINICAL_LIMITS.md](docs/CLINICAL_LIMITS.md).
 
 ## Deployment
 
