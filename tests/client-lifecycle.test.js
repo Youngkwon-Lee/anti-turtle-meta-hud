@@ -24,4 +24,5 @@ test('camera pose analysis is opt-in and stops with the camera lifecycle', funct
   assert.match(clientSource, /state\.cameraPoseEnabled = state\.cameraMode && params\.get\('pose'\) === '1';/);
   assert.match(clientSource, /function stopCamera\(\) \{[\s\S]*?stopCameraPose\(\);/);
   assert.match(clientSource, /function startCameraPose\(\) \{[\s\S]*?fps: 8,/);
+  assert.match(clientSource, /canvas\.dataset\.headDepthProxy = deviations\.headDepthProxy\.toFixed\(5\);/);
 });

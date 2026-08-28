@@ -531,6 +531,26 @@
     var canvas = elements.cameraPoseOverlay;
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
+    delete canvas.dataset.headDepthProxy;
+    delete canvas.dataset.torsoDepthProxy;
+    delete canvas.dataset.headShoulderX;
+    delete canvas.dataset.headShoulderY;
+  }
+
+  function publishCameraPoseDiagnostics(comparison) {
+    var canvas = elements.cameraPoseOverlay;
+    var deviations = comparison && comparison.available ? comparison.deviations : null;
+    if (!deviations) {
+      delete canvas.dataset.headDepthProxy;
+      delete canvas.dataset.torsoDepthProxy;
+      delete canvas.dataset.headShoulderX;
+      delete canvas.dataset.headShoulderY;
+      return;
+    }
+    canvas.dataset.headDepthProxy = deviations.headDepthProxy.toFixed(5);
+    canvas.dataset.torsoDepthProxy = deviations.torsoDepthProxy.toFixed(5);
+    canvas.dataset.headShoulderX = deviations.headShoulderX.toFixed(5);
+    canvas.dataset.headShoulderY = deviations.headShoulderY.toFixed(5);
   }
 
   function cameraPosePoint(landmark, width, height) {
@@ -647,6 +667,7 @@
       sample,
       state.cameraPoseBaseline
     );
+    publishCameraPoseDiagnostics(state.cameraPoseComparison);
     var signedHeadDeviation = state.externalTelemetry
       ? Number(state.externalTelemetry.signedDeviationDeg)
       : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : NaN;
