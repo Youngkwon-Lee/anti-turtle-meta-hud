@@ -2,7 +2,9 @@
 
 [English](README.md) | [한국어](README.ko.md)
 
-[![CI](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml)
+[![CI](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/actions/workflows/ci.yml)
+
+> 🥈 **OpenAI × NuCode 해커톤 2위** · TOYTHON 안티터틀 팀 공동 산출물
 
 [영문 음성 프로젝트 데모를 YouTube에서 보기](https://youtu.be/k-gM6kyfsp4)
 
@@ -166,18 +168,18 @@ UPSTASH_REDIS_REST_TOKEN
 
 이 프로젝트는 실험용 프로토타입입니다. 장치 지원, 브라우저 센서 권한, Meta Display Web App 동작은 변경될 수 있습니다. 릴리스에 의존하기 전에 대상 안경과 운영체제에서 직접 시험하세요.
 
-현재 공개 마일스톤은 연구용 프로토타입 [`v0.1.1`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.1)입니다. 측정 범위나 지원 장치를 확장하기 전에 [로드맵](docs/ROADMAP.md), [릴리스 체크리스트](docs/RELEASE_CHECKLIST.md), [오픈소스 검토](docs/OPEN_SOURCE_REVIEW.md), [Meta Ray-Ban Display 생태계 조사](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md)를 확인하세요.
+현재 공개 마일스톤은 연구용 프로토타입 [`v0.1.1`](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/releases/tag/v0.1.1)입니다. 측정 범위나 지원 장치를 확장하기 전에 [로드맵](docs/ROADMAP.md), [릴리스 체크리스트](docs/RELEASE_CHECKLIST.md), [오픈소스 검토](docs/OPEN_SOURCE_REVIEW.md), [Meta Ray-Ban Display 생태계 조사](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md)를 확인하세요.
 
 ## 팀 및 기여
 
-초기 TOYTHON 안티터틀 해커톤 팀은 다음 네 명입니다.
+초기 TOYTHON 안티터틀 해커톤 팀(🥈 OpenAI × NuCode 해커톤 2위)은 다음 네 명입니다.
 
 - 구철회
 - 박상준
 - 홍주영
 - 이영권 (`Youngkwon-Lee`)
 
-현재 분리된 오픈소스 저장소는 `Youngkwon-Lee`가 유지관리하고 있습니다. 이 저장소의 Git 기록에는 해커톤 과정에서 이루어진 디자인, 하드웨어, 운영, 발표 등 코드 외 기여가 모두 나타나지 않을 수 있습니다.
+현재 분리된 오픈소스 저장소는 `anti-turtle-lab` GitHub organization에서 유지관리하고 있습니다 (주 관리자 `Youngkwon-Lee`). 이 저장소의 Git 기록에는 해커톤 과정에서 이루어진 디자인, 하드웨어, 운영, 발표 등 코드 외 기여가 모두 나타나지 않을 수 있습니다.
 
 ## AI 활용 개발
 
