@@ -35,6 +35,6 @@ All notable changes to this project are documented in this file. The format foll
 - Public roadmap, release checklist, and open-source reuse review.
 - Structured bug, device compatibility, and pull-request templates.
 
-[Unreleased]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.0
+[Unreleased]: https://github.com/anti-turtle-lab/anti-turtle-meta-hud/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/anti-turtle-lab/anti-turtle-meta-hud/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/anti-turtle-lab/anti-turtle-meta-hud/releases/tag/v0.1.0

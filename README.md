@@ -2,7 +2,9 @@
 
 [English](README.md) | [한국어](README.ko.md)
 
-[![CI](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/actions/workflows/ci.yml)
+[![CI](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/actions/workflows/ci.yml)
+
+> 🥈 **2nd Place — OpenAI × NuCode Hackathon** · built by the TOYTHON Anti Turtle team
 
 [Watch the narrated project demo on YouTube](https://youtu.be/k-gM6kyfsp4)
 
@@ -166,18 +168,18 @@ Head orientation is not CVA. An IMU in glasses cannot locate the tragus or C7 an
 
 This is an experimental prototype. Device support, browser sensor permissions, and Meta Display Web App behavior may change. Test on the intended glasses and operating system before relying on a release.
 
-The current milestone is the public [`v0.1.1`](https://github.com/Youngkwon-Lee/anti-turtle-meta-hud/releases/tag/v0.1.1) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), [open-source review](docs/OPEN_SOURCE_REVIEW.md), and [Meta Ray-Ban Display ecosystem map](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md) before extending the measurement or device scope.
+The current milestone is the public [`v0.1.1`](https://github.com/anti-turtle-lab/anti-turtle-meta-hud/releases/tag/v0.1.1) research prototype. See the [roadmap](docs/ROADMAP.md), [release checklist](docs/RELEASE_CHECKLIST.md), [open-source review](docs/OPEN_SOURCE_REVIEW.md), and [Meta Ray-Ban Display ecosystem map](docs/META_RAYBAN_OPEN_SOURCE_ECOSYSTEM.md) before extending the measurement or device scope.
 
 ## Team and credits
 
-The original TOYTHON Anti Turtle hackathon team was:
+The original TOYTHON Anti Turtle hackathon team (🥈 2nd place, OpenAI × NuCode Hackathon) was:
 
 - 구철회
 - 박상준
 - 홍주영
 - 이영권 (`Youngkwon-Lee`)
 
-This extracted open-source repository is currently maintained by `Youngkwon-Lee`. Its Git history may not represent design, hardware, operations, presentation, and other non-code contributions made during the hackathon.
+This extracted open-source repository is maintained under the `anti-turtle-lab` GitHub organization (lead maintainer `Youngkwon-Lee`). Its Git history may not represent design, hardware, operations, presentation, and other non-code contributions made during the hackathon.
 
 ## AI-assisted development
 
