@@ -12,6 +12,7 @@
     presentationTelemetryPollMs: 100,
     telemetryPostMs: 200,
     telemetryStaleMs: 1500,
+    cameraPoseBaselineGraceMs: 2000,
     uiIntervalMs: 50,
     demoIntervalMs: 100,
     headReseatGapMs: 2000,
@@ -40,6 +41,7 @@
     photo: null,
     photoLoading: false,
     externalTelemetry: null,
+    externalTelemetryReceivedAt: 0,
     telemetryPollTimer: null,
     telemetryRequestBusy: false,
     telemetryPostTimer: null,
@@ -76,6 +78,7 @@
     cameraPoseBaseline: null,
     cameraPoseComparison: null,
     cameraPoseFusion: null,
+    cameraPoseUnavailableSince: null,
     headImuMode: false,
     headOnlyMode: false,
     headCalibration: null,
@@ -640,17 +643,39 @@
     return 'POSE · REPOSITION';
   }
 
+  function freshExternalTelemetry() {
+    var ageMs = Date.now() - state.externalTelemetryReceivedAt;
+    return state.externalTelemetry && state.externalTelemetryReceivedAt > 0 &&
+      ageMs >= 0 && ageMs <= CONFIG.telemetryStaleMs
+      ? state.externalTelemetry
+      : null;
+  }
+
   function handleCameraPoseSample(sample) {
     state.cameraPoseSample = sample;
     renderCameraPoseOverlay(sample);
     if (!sample || !sample.available) {
-      state.cameraPoseBaseline = null;
       state.cameraPoseComparison = null;
       state.cameraPoseFusion = null;
-      if (state.cameraPoseCalibrator) state.cameraPoseCalibrator.add(sample);
+      var unavailableAt = sample && Number.isFinite(Number(sample.at))
+        ? Number(sample.at)
+        : performance.now();
+      if (state.cameraPoseBaseline) {
+        if (state.cameraPoseUnavailableSince === null) {
+          state.cameraPoseUnavailableSince = unavailableAt;
+        } else if (unavailableAt - state.cameraPoseUnavailableSince >=
+            CONFIG.cameraPoseBaselineGraceMs) {
+          state.cameraPoseBaseline = null;
+          state.cameraPoseUnavailableSince = null;
+          if (state.cameraPoseCalibrator) state.cameraPoseCalibrator.reset();
+        }
+      } else if (state.cameraPoseCalibrator) {
+        state.cameraPoseCalibrator.add(sample);
+      }
       setCameraPoseStatus('unavailable', cameraPoseUnavailableLabel(sample));
       return;
     }
+    state.cameraPoseUnavailableSince = null;
     if (!state.cameraPoseBaseline) {
       var calibration = state.cameraPoseCalibrator.add(sample);
       if (!calibration.ready) {
@@ -668,9 +693,12 @@
       state.cameraPoseBaseline
     );
     publishCameraPoseDiagnostics(state.cameraPoseComparison);
-    var signedHeadDeviation = state.externalTelemetry
-      ? Number(state.externalTelemetry.signedDeviationDeg)
-      : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : NaN;
+    var externalTelemetry = freshExternalTelemetry();
+    var signedHeadDeviation = externalTelemetry
+      ? Number(externalTelemetry.signedDeviationDeg)
+      : state.externalTelemetry
+        ? NaN
+        : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : NaN;
     var headFlexionDeg = Number.isFinite(signedHeadDeviation)
       ? window.AntiTurtleEngine.postureVisualDeviation(signedHeadDeviation)
       : null;
@@ -704,6 +732,7 @@
     state.cameraPoseBaseline = null;
     state.cameraPoseComparison = null;
     state.cameraPoseFusion = null;
+    state.cameraPoseUnavailableSince = null;
     state.cameraPoseAdapter = window.AntiTurtleCameraPoseAdapter.createMediaPipePoseAdapter({
       fps: 8,
       analyzeResult: window.AntiTurtleCameraPose.analyzeResult,
@@ -728,6 +757,7 @@
     state.cameraPoseBaseline = null;
     state.cameraPoseComparison = null;
     state.cameraPoseFusion = null;
+    state.cameraPoseUnavailableSince = null;
     clearCameraPoseOverlay();
     elements.cameraPoseOverlay.hidden = true;
     elements.cameraPoseStatus.hidden = true;
@@ -1154,6 +1184,7 @@
     if (state.telemetryReceiver && !state.telemetryReceiver.accept(message)) return true;
     stopLiveInputs();
     state.externalTelemetry = message;
+    state.externalTelemetryReceivedAt = Date.now();
     state.mode = headRelay ? 'glasses' : 'dual';
     state.running = true;
     elements.hudLiveLabel.textContent = state.relayShared === false
@@ -1788,6 +1819,7 @@
     state.lastSnapshot = null;
     state.summary = null;
     state.externalTelemetry = null;
+    state.externalTelemetryReceivedAt = 0;
     state.lastTelemetryPostAt = 0;
     state.relayShared = null;
     if (state.telemetryReceiver) state.telemetryReceiver.reset();
