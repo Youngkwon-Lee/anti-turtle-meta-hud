@@ -172,11 +172,15 @@ test('fusion distinguishes looking down from a neutral camera pose', function ()
 });
 
 test('fusion labels relative head approach as a non-clinical forward risk', function () {
-  var comparison = baselineAndComparison(frame(replay.forwardRisk));
+  var comparison = baselineAndComparison(frame(replay.pureForwardRisk));
   var fusion = cameraPose.classifyFusion(comparison, 2);
 
   assert.equal(fusion.state, 'HEAD_FORWARD_RISK');
   assert.equal(fusion.signals.headForward, true);
+  assert.equal(fusion.signals.bodyForward, false);
+  assert.equal(fusion.signals.lookingDown, false);
+  assert.ok(Math.abs(comparison.deviations.headShoulderY) < 0.01,
+    'pure forward translation must not require a vertical head drop');
   assert.equal(Object.prototype.hasOwnProperty.call(fusion, 'diagnosis'), false);
 });
 

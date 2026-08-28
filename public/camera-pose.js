@@ -33,7 +33,6 @@
     calibrationMaxGapMs: 500,
     fusionHeadFlexionAtDeg: 8,
     fusionHeadDepthAt: 0.05,
-    fusionHeadDropAt: 0.04,
     fusionTorsoDepthAt: 0.035,
     fusionSideLeanAtDeg: 6,
   };
@@ -325,9 +324,12 @@
       };
     }
 
-    var headForward = deviations.headDepthProxy >= options.fusionHeadDepthAt &&
-      deviations.headShoulderY >= options.fusionHeadDropAt;
     var bodyForward = deviations.torsoDepthProxy >= options.fusionTorsoDepthAt;
+    // A frontal camera sees pure forward-head translation primarily as the
+    // face growing relative to shoulder width. Requiring a vertical head drop
+    // incorrectly turns the signal into a proxy for looking down.
+    var headForward = !bodyForward &&
+      deviations.headDepthProxy >= options.fusionHeadDepthAt;
     var lookingDown = flexion >= options.fusionHeadFlexionAtDeg;
     var active = [sideLean, headForward, bodyForward, lookingDown]
       .filter(Boolean).length;

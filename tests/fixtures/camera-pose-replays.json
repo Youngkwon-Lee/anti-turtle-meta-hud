@@ -8,6 +8,7 @@
     { "at": 375, "offsetX": 0.001, "offsetY": 0.001, "faceDelta": 0.000 },
     { "at": 500, "offsetX": 0.000, "offsetY": -0.002, "faceDelta": 0.001 }
   ],
+  "pureForwardRisk": { "at": 600, "offsetX": 0.000, "offsetY": 0.000, "faceDelta": 0.012 },
   "forwardRisk": { "at": 625, "offsetX": 0.000, "offsetY": 0.030, "faceDelta": 0.010 },
   "unstable": [
     { "at": 0, "offsetX": -0.050, "offsetY": 0.000, "faceDelta": 0.000 },
