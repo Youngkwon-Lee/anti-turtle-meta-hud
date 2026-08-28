@@ -75,6 +75,20 @@ https://YOUR_DEPLOYMENT.example/?camera=1&source=head&session=team_demo
 
 안경의 외부 카메라는 일반 웹 카메라로 노출되지 않습니다. 카메라 수신기 주소는 해당 페이지를 연 Mac이나 휴대전화의 카메라를 사용합니다.
 
+## 실험적 로컬 카메라 포즈 미리보기
+
+v0.2 개발 브랜치는 공개 v0.1.1의 HEAD/HYBRID 계약을 변경하지 않고 다음 주소에서 선택적으로 Mac 카메라 포인트 오버레이를 실행합니다.
+
+```text
+http://127.0.0.1:3000/?camera=1&source=head&pose=1&session=pose-dev
+```
+
+카메라 권한을 허용하고 Mac 카메라를 눈높이 가까이에 둔 뒤 코, 양쪽 귀, 양쪽 어깨, 가능하면 양쪽 골반이 보이게 앉으세요. 고정된 MediaPipe Pose Landmarker Lite 모델을 8Hz로 실행하며, 안정된 자세를 3초간 유지한 뒤 개인 기준선을 설정합니다. 상태는 `READY`, `PARTIAL` 또는 위치 조정 안내로 표시됩니다. 골반이 보이지 않아도 머리·어깨 기하는 사용할 수 있지만 몸통 기울기는 unavailable로 둡니다.
+
+프레임은 로컬 `<video>` 요소에서 브라우저 내부 landmarker로 직접 전달되며 Anti Turtle이 업로드·릴레이·로그·보관하지 않습니다. 최초 실행에는 jsDelivr와 Google Storage에서 고정된 MediaPipe JavaScript/WASM 런타임과 모델을 내려받습니다. MediaPipe 자체의 성능·사용량 metric 수집 가능성은 공식 문서와 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)를 확인하세요.
+
+파생값은 개인 기준선 대비 `headShoulderX`, `headShoulderY`, `headDepthProxy`, `torsoDepthProxy`, `headRollDeg`, `shoulderTiltDeg`, 선택적인 `torsoLeanDeg`입니다. 최신 signed 안경 IMU 편차도 함께 들어오면 실험적 융합 계층이 `NEUTRAL`, `LOOKING_DOWN`, `HEAD_FORWARD_RISK`, `BODY_FORWARD`, `SIDE_LEAN`, `MIXED` 동작 패턴을 표시합니다. 필수 입력이 없으면 추측하지 않고 `WAIT IMU` 또는 `REPOSITION`을 반환합니다. 정면 노트북 카메라는 전방 이동 거리를 cm 단위로 측정할 수 없고 일반 Pose landmark는 C7을 찾지 못하므로, 이 모드는 CVA를 출력하거나 FHP를 진단하지 않습니다.
+
 ## macOS 알림과 메뉴 막대
 
 카메라 HUD를 열지 않고도 동료의 Mac에서 기본 알림을 받을 수 있습니다.
