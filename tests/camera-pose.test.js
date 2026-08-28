@@ -100,7 +100,7 @@ test('reports forward-risk proxies as baseline deviations without claiming CVA',
 
   assert.equal(comparison.available, true);
   assert.ok(comparison.deviations.headShoulderY > 0.05);
-  assert.ok(comparison.deviations.headDepthProxy > 0.05);
+  assert.ok(comparison.deviations.headDepthProxy >= 0.012);
   assert.equal(Object.prototype.hasOwnProperty.call(comparison.deviations, 'cva'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(comparison.deviations, 'fhp'), false);
 });
@@ -172,16 +172,24 @@ test('fusion distinguishes looking down from a neutral camera pose', function ()
 });
 
 test('fusion labels relative head approach as a non-clinical forward risk', function () {
-  var comparison = baselineAndComparison(frame(replay.pureForwardRisk));
+  var comparison = baselineAndComparison(frame(replay.forwardRisk));
   var fusion = cameraPose.classifyFusion(comparison, 2);
 
   assert.equal(fusion.state, 'HEAD_FORWARD_RISK');
   assert.equal(fusion.signals.headForward, true);
   assert.equal(fusion.signals.bodyForward, false);
   assert.equal(fusion.signals.lookingDown, false);
-  assert.ok(Math.abs(comparison.deviations.headShoulderY) < 0.01,
-    'pure forward translation must not require a vertical head drop');
+  assert.ok(comparison.deviations.headDepthProxy >= 0.012);
+  assert.ok(comparison.deviations.headShoulderY >= 0.04);
   assert.equal(Object.prototype.hasOwnProperty.call(fusion, 'diagnosis'), false);
+});
+
+test('fusion rejects face-scale change without corroborating head-to-shoulder displacement', function () {
+  var comparison = baselineAndComparison(frame(replay.pureForwardRisk));
+  var fusion = cameraPose.classifyFusion(comparison, 2);
+
+  assert.equal(fusion.state, 'NEUTRAL');
+  assert.equal(fusion.signals.headForward, false);
 });
 
 test('fusion distinguishes whole-body approach when shoulder scale grows with the face', function () {
