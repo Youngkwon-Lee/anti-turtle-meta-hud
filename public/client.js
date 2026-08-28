@@ -69,6 +69,13 @@
     cameraStream: null,
     cameraUnavailable: false,
     desktopCameraPreview: false,
+    cameraPoseEnabled: false,
+    cameraPoseAdapter: null,
+    cameraPoseSample: null,
+    cameraPoseCalibrator: null,
+    cameraPoseBaseline: null,
+    cameraPoseComparison: null,
+    cameraPoseFusion: null,
     headImuMode: false,
     headOnlyMode: false,
     headCalibration: null,
@@ -92,6 +99,9 @@
     elements.cameraShade = document.getElementById('camera-shade');
     elements.cameraIndicator = document.getElementById('camera-indicator');
     elements.cameraIndicatorLabel = document.getElementById('camera-indicator-label');
+    elements.cameraPoseOverlay = document.getElementById('camera-pose-overlay');
+    elements.cameraPoseStatus = document.getElementById('camera-pose-status');
+    elements.cameraPoseStatusLabel = document.getElementById('camera-pose-status-label');
     elements.cameraGate = document.getElementById('camera-gate');
     elements.cameraMessage = document.getElementById('camera-message');
     elements.cameraAction = document.getElementById('camera-action');
@@ -507,7 +517,203 @@
     }
   }
 
+  function setCameraPoseStatus(status, label) {
+    if (!state.cameraPoseEnabled) {
+      elements.cameraPoseStatus.hidden = true;
+      return;
+    }
+    elements.cameraPoseStatus.dataset.status = status;
+    elements.cameraPoseStatusLabel.textContent = label;
+    elements.cameraPoseStatus.hidden = false;
+  }
+
+  function clearCameraPoseOverlay() {
+    var canvas = elements.cameraPoseOverlay;
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function cameraPosePoint(landmark, width, height) {
+    if (!landmark || !elements.cameraFeed.videoWidth || !elements.cameraFeed.videoHeight) return null;
+    var videoWidth = elements.cameraFeed.videoWidth;
+    var videoHeight = elements.cameraFeed.videoHeight;
+    var scale = Math.max(width / videoWidth, height / videoHeight);
+    var displayedWidth = videoWidth * scale;
+    var displayedHeight = videoHeight * scale;
+    var cropX = (displayedWidth - width) / 2;
+    var cropY = (displayedHeight - height) / 2;
+    var normalizedX = state.cameraFacing === 'user' ? 1 - landmark.x : landmark.x;
+    return {
+      x: normalizedX * displayedWidth - cropX,
+      y: landmark.y * displayedHeight - cropY,
+    };
+  }
+
+  function renderCameraPoseOverlay(sample) {
+    var canvas = elements.cameraPoseOverlay;
+    var width = elements.presentationHud.clientWidth || 584;
+    var height = elements.presentationHud.clientHeight || 584;
+    var pixelRatio = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    var context = canvas.getContext('2d');
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    context.clearRect(0, 0, width, height);
+    if (!sample || !sample.available || !sample.anchors) {
+      canvas.hidden = true;
+      return;
+    }
+
+    var anchors = sample.anchors;
+    var signal = sample.quality.status === 'PARTIAL' ? '#ffd35a' : '#63e1e0';
+    var points = {};
+    Object.keys(anchors).forEach(function (name) {
+      if (anchors[name] && typeof anchors[name].x === 'number') {
+        points[name] = cameraPosePoint(anchors[name], width, height);
+      }
+    });
+    var headLeft = points.leftEar || points.leftEyeOuter;
+    var headRight = points.rightEar || points.rightEyeOuter;
+    var segments = [
+      [headLeft, headRight],
+      [points.leftShoulder, points.rightShoulder],
+      [points.headMidpoint, points.shoulderMidpoint],
+      [points.leftHip, points.rightHip],
+      [points.shoulderMidpoint, points.hipMidpoint],
+    ];
+    context.strokeStyle = signal;
+    context.fillStyle = signal;
+    context.lineWidth = 1.7;
+    context.globalAlpha = 0.86;
+    segments.forEach(function (segment) {
+      if (!segment[0] || !segment[1]) return;
+      context.beginPath();
+      context.moveTo(segment[0].x, segment[0].y);
+      context.lineTo(segment[1].x, segment[1].y);
+      context.stroke();
+    });
+    [
+      points.nose,
+      points.leftEar,
+      points.rightEar,
+      points.leftEyeOuter,
+      points.rightEyeOuter,
+      points.leftShoulder,
+      points.rightShoulder,
+      points.leftHip,
+      points.rightHip,
+    ].forEach(function (point) {
+      if (!point) return;
+      context.beginPath();
+      context.arc(point.x, point.y, 3.6, 0, Math.PI * 2);
+      context.fill();
+    });
+    canvas.hidden = false;
+  }
+
+  function cameraPoseUnavailableLabel(sample) {
+    var reason = sample && sample.quality && sample.quality.reasons[0];
+    if (reason === 'NO_POSE') return 'POSE · STEP INTO FRAME';
+    if (reason === 'LOW_VISIBILITY') return 'POSE · MORE LIGHT';
+    if (reason === 'OUT_OF_FRAME') return 'POSE · CENTER YOURSELF';
+    if (reason === 'SUBJECT_TOO_SMALL' || reason === 'FACE_TOO_SMALL') return 'POSE · MOVE CLOSER';
+    return 'POSE · REPOSITION';
+  }
+
+  function handleCameraPoseSample(sample) {
+    state.cameraPoseSample = sample;
+    renderCameraPoseOverlay(sample);
+    if (!sample || !sample.available) {
+      state.cameraPoseBaseline = null;
+      state.cameraPoseComparison = null;
+      state.cameraPoseFusion = null;
+      if (state.cameraPoseCalibrator) state.cameraPoseCalibrator.add(sample);
+      setCameraPoseStatus('unavailable', cameraPoseUnavailableLabel(sample));
+      return;
+    }
+    if (!state.cameraPoseBaseline) {
+      var calibration = state.cameraPoseCalibrator.add(sample);
+      if (!calibration.ready) {
+        var percent = Math.round(calibration.progress * 100);
+        setCameraPoseStatus(
+          calibration.status === 'MOVING' ? 'partial' : 'loading',
+          calibration.status === 'MOVING' ? 'POSE · HOLD STILL' : 'POSE CALIBRATING · ' + percent + '%'
+        );
+        return;
+      }
+      state.cameraPoseBaseline = calibration.baseline;
+    }
+    state.cameraPoseComparison = window.AntiTurtleCameraPose.compareToBaseline(
+      sample,
+      state.cameraPoseBaseline
+    );
+    var signedHeadDeviation = state.externalTelemetry
+      ? Number(state.externalTelemetry.signedDeviationDeg)
+      : state.lastSnapshot ? Number(state.lastSnapshot.signedDeviation) : NaN;
+    var headFlexionDeg = Number.isFinite(signedHeadDeviation)
+      ? window.AntiTurtleEngine.postureVisualDeviation(signedHeadDeviation)
+      : null;
+    state.cameraPoseFusion = window.AntiTurtleCameraPose.classifyFusion(
+      state.cameraPoseComparison,
+      headFlexionDeg
+    );
+    if (state.cameraPoseFusion.state === 'IMU_UNAVAILABLE') {
+      setCameraPoseStatus('loading', 'POSE READY · WAIT IMU');
+      return;
+    }
+    if (state.cameraPoseFusion.state !== 'NEUTRAL') {
+      setCameraPoseStatus('partial', 'POSE · ' + state.cameraPoseFusion.label);
+      return;
+    }
+    if (sample.quality.status === 'PARTIAL') {
+      setCameraPoseStatus('partial', 'POSE PARTIAL · SHOULDERS OK');
+      return;
+    }
+    setCameraPoseStatus('ready', 'POSE READY');
+  }
+
+  function startCameraPose() {
+    if (!state.cameraPoseEnabled || !state.cameraStream || state.cameraPoseAdapter) return;
+    if (!window.AntiTurtleCameraPose || !window.AntiTurtleCameraPoseAdapter) {
+      setCameraPoseStatus('unavailable', 'POSE MODULE UNAVAILABLE');
+      return;
+    }
+    setCameraPoseStatus('loading', 'POSE LOADING');
+    state.cameraPoseCalibrator = window.AntiTurtleCameraPose.createCalibrator();
+    state.cameraPoseBaseline = null;
+    state.cameraPoseComparison = null;
+    state.cameraPoseFusion = null;
+    state.cameraPoseAdapter = window.AntiTurtleCameraPoseAdapter.createMediaPipePoseAdapter({
+      fps: 8,
+      analyzeResult: window.AntiTurtleCameraPose.analyzeResult,
+      onSample: handleCameraPoseSample,
+      onStatus: function (status) {
+        if (status.status === 'LOADING') setCameraPoseStatus('loading', 'POSE LOADING');
+        if (status.status === 'ERROR') setCameraPoseStatus('unavailable', 'POSE MODEL UNAVAILABLE');
+      },
+    });
+    state.cameraPoseAdapter.start(elements.cameraFeed).then(function (started) {
+      if (!started && state.cameraPoseAdapter) {
+        setCameraPoseStatus('unavailable', 'POSE MODEL UNAVAILABLE');
+      }
+    });
+  }
+
+  function stopCameraPose() {
+    if (state.cameraPoseAdapter) state.cameraPoseAdapter.stop();
+    state.cameraPoseAdapter = null;
+    state.cameraPoseSample = null;
+    state.cameraPoseCalibrator = null;
+    state.cameraPoseBaseline = null;
+    state.cameraPoseComparison = null;
+    state.cameraPoseFusion = null;
+    clearCameraPoseOverlay();
+    elements.cameraPoseOverlay.hidden = true;
+    elements.cameraPoseStatus.hidden = true;
+  }
+
   function stopCamera() {
+    stopCameraPose();
     if (state.cameraStream) {
       state.cameraStream.getTracks().forEach(function (track) { track.stop(); });
     }
@@ -592,6 +798,7 @@
         : 'CAMERA LIVE · REAR';
       elements.cameraIndicator.hidden = false;
       elements.presentationHud.classList.add('camera-active');
+      startCameraPose();
     }).catch(function (error) {
       stopCamera();
       if (state.presentationSource === 'ble') {
@@ -1708,8 +1915,10 @@
     state.cameraFacing = params.get('facing') === 'user' ||
       (desktopRelayCamera && !params.has('facing')) ? 'user' : 'environment';
     state.desktopCameraPreview = desktopRelayCamera;
+    state.cameraPoseEnabled = state.cameraMode && params.get('pose') === '1';
     document.body.classList.toggle('presentation-mode', state.presentationMode);
     document.body.classList.toggle('camera-mode', state.cameraMode);
+    document.body.classList.toggle('camera-pose-mode', state.cameraPoseEnabled);
     document.body.classList.toggle('head-only-mode', state.headOnlyMode || requestedSource === 'head');
     if (state.headOnlyMode || requestedSource === 'head') {
       elements.hudSensorPair.setAttribute('aria-label', 'Ray-Ban 머리 IMU 보정 편차');

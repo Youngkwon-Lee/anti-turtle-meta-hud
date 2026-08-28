@@ -75,6 +75,20 @@ On the glasses, choose **START HEAD IMU** and hold a comfortable neutral posture
 
 The outward-facing glasses camera is not exposed as a normal web camera. The camera receiver URL uses the Mac or phone camera where that page is open.
 
+## Experimental local camera pose preview
+
+The v0.2 development branch adds an opt-in Mac camera overlay without changing the public v0.1.1 HEAD/HYBRID contract:
+
+```text
+http://127.0.0.1:3000/?camera=1&source=head&pose=1&session=pose-dev
+```
+
+Allow camera access, keep the Mac camera near eye height, and frame the nose, both ears, both shoulders, and—when practical—both hips. The preview runs the pinned MediaPipe Pose Landmarker Lite model at 8 Hz, holds a stable pose for three seconds before establishing a personal baseline, and reports `READY`, `PARTIAL`, or a reposition instruction. Missing hips keep head/shoulder geometry available but make torso lean unavailable.
+
+Frames are passed directly from the local `<video>` element to the in-browser landmarker and are not uploaded, relayed, logged, or retained by Anti Turtle. The first run downloads the pinned MediaPipe JavaScript/WASM runtime and model from jsDelivr and Google Storage; MediaPipe may collect its own performance and utilization metrics as described in its documentation. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+The derived values are personal-baseline proxies named `headShoulderX`, `headShoulderY`, `headDepthProxy`, `torsoDepthProxy`, `headRollDeg`, `shoulderTiltDeg`, and optional `torsoLeanDeg`. When a fresh signed glasses-IMU deviation is also available, the experimental fusion layer can label `NEUTRAL`, `LOOKING_DOWN`, `HEAD_FORWARD_RISK`, `BODY_FORWARD`, `SIDE_LEAN`, or `MIXED`; it returns `WAIT IMU` or `REPOSITION` instead of guessing when a required input is missing. A front-facing laptop camera cannot measure forward translation in centimeters, and generic pose landmarks do not locate C7, so this mode does not output CVA or diagnose FHP.
+
 ## macOS notifications
 
 A colleague can receive native posture notifications without opening the camera HUD:

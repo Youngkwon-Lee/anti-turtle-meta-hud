@@ -19,3 +19,9 @@ test('hidden pages stop both live inputs and telemetry polling', function () {
     /if \(document\.hidden\) \{[\s\S]*?stopLiveInputs\(\);[\s\S]*?stopTelemetryPolling\(\);[\s\S]*?return;/
   );
 });
+
+test('camera pose analysis is opt-in and stops with the camera lifecycle', function () {
+  assert.match(clientSource, /state\.cameraPoseEnabled = state\.cameraMode && params\.get\('pose'\) === '1';/);
+  assert.match(clientSource, /function stopCamera\(\) \{[\s\S]*?stopCameraPose\(\);/);
+  assert.match(clientSource, /function startCameraPose\(\) \{[\s\S]*?fps: 8,/);
+});

@@ -227,8 +227,12 @@
       <section id="presentation-hud" class="presentation-hud" aria-label="Anti Turtle 자세 HUD" aria-live="polite" hidden>
         <video id="camera-feed" class="camera-feed" autoplay muted playsinline hidden></video>
         <div id="camera-shade" class="camera-shade" aria-hidden="true" hidden></div>
+        <canvas id="camera-pose-overlay" class="camera-pose-overlay" aria-hidden="true" hidden></canvas>
         <div id="camera-indicator" class="camera-indicator" role="status" hidden>
           <span aria-hidden="true"></span><strong id="camera-indicator-label">CAMERA LIVE</strong>
+        </div>
+        <div id="camera-pose-status" class="camera-pose-status" role="status" aria-live="polite" hidden>
+          <span aria-hidden="true"></span><strong id="camera-pose-status-label">POSE LOADING</strong>
         </div>
         <div id="camera-gate" class="camera-gate static-surface" role="status" hidden>
           <p>LIVE CAMERA</p>
@@ -312,6 +316,8 @@
     </div>
 
     <script src="posture-engine.js?v=20260827-anatomy-three-state-3"></script>
+    <script src="camera-pose.js?v=20260828-camera-pose-contract-1"></script>
+    <script src="camera-pose-adapter.js?v=20260828-camera-pose-adapter-1"></script>
     <script src="runtime-mode.js?v=20260822-head-only-relay-1"></script>
     <script src="relay-protocol.js?v=20260822-realtime-relay-1"></script>
     <script src="vendor/lottie-light-5.13.0.min.js?v=5.13.0"></script>

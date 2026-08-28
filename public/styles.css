@@ -768,7 +768,8 @@ button {
 }
 
 .camera-feed,
-.camera-shade {
+.camera-shade,
+.camera-pose-overlay {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -791,6 +792,16 @@ button {
     radial-gradient(circle at 54% 48%, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.34) 88%),
     rgba(0, 13, 17, 0.16);
   pointer-events: none;
+}
+
+.camera-pose-overlay {
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px rgba(99, 225, 224, 0.58));
+}
+
+.camera-pose-overlay[hidden] {
+  display: none;
 }
 
 .camera-indicator {
@@ -818,6 +829,48 @@ button {
   border-radius: 50%;
   background: var(--danger);
   box-shadow: 0 0 10px rgba(255, 132, 111, 0.9);
+}
+
+.camera-pose-status {
+  position: absolute;
+  z-index: 3;
+  top: 20px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid rgba(99, 225, 224, 0.42);
+  border-radius: 999px;
+  background: rgba(0, 13, 17, 0.56);
+  color: var(--cyan);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.camera-pose-status[hidden] {
+  display: none;
+}
+
+.camera-pose-status span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.camera-pose-status[data-status="partial"],
+.camera-pose-status[data-status="loading"] {
+  color: var(--amber);
+  border-color: rgba(255, 211, 90, 0.42);
+}
+
+.camera-pose-status[data-status="unavailable"] {
+  color: var(--danger);
+  border-color: rgba(255, 132, 111, 0.5);
 }
 
 .camera-gate {
